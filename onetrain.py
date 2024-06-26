@@ -21,6 +21,7 @@ from tqdm import tqdm
 
 # info class that can be accessed externally
 info = types.SimpleNamespace(
+    concept = '',
     busy = False,
     complete = 0,
     samples = 0,

@@ -19,7 +19,7 @@ from rich.logging import RichHandler
 from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn, TimeElapsedColumn
 from tqdm import tqdm
 
-sys.path.append(os.path.abspath("/hello/hello@moodmagic.ai/onetrainer"))
+sys.path.append(os.path.abspath(os.environ.get("ONETRAINER_PATH")))
 
 from modules.util.callbacks.TrainCallbacks import TrainCallbacks # pylint: disable=import-error
 from modules.util.commands.TrainCommands import TrainCommands # pylint: disable=import-error
@@ -353,6 +353,7 @@ def train(args: TrainArgs):
             time.sleep(1)
             trainer.train()
         trainer.end()
+        info.status = 'completed'
         log.info(f'save: {trainer.config.output_model_destination}')
         log.info('train: completed')
     except Exception as e:

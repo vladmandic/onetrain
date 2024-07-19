@@ -3,6 +3,7 @@
 import types
 import os
 import sys
+import traceback
 import time
 import json
 import warnings
@@ -18,16 +19,23 @@ from rich.logging import RichHandler
 from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn, TimeElapsedColumn
 from tqdm import tqdm
 
+sys.path.append(os.path.abspath(os.environ.get("ONETRAINER_PATH")))
+
+from modules.util.callbacks.TrainCallbacks import TrainCallbacks # pylint: disable=import-error
+from modules.util.commands.TrainCommands import TrainCommands # pylint: disable=import-error
+from modules.trainer.GenericTrainer import GenericTrainer # pylint: disable=import-error
+
 
 # info class that can be accessed externally
 info = types.SimpleNamespace(
     concept = '',
+    status = 'waiting',
     busy = False,
     complete = 0,
     samples = 0,
     buckets = {},
     start = None,
-    progress = None, # modules.util.TrainProgress.TrainProgress
+    progress = '', # modules.util.TrainProgress.TrainProgress
 )
 
 
@@ -74,6 +82,39 @@ pbar = Progress(
     console=console,
     transient=False)
 
+# Logger configuration function
+def configure_logger(logtail_handler=None):
+    log.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    
+    # Console handler
+    log_handler_console = RichHandler(
+        show_time=True, 
+        omit_repeated_times=False, 
+        show_level=True, 
+        show_path=False, 
+        markup=False, 
+        rich_tracebacks=True, 
+        log_time_format='%H:%M:%S-%f', 
+        level=logging.INFO, 
+        console=console
+    )
+    log_handler_console.setLevel(logging.INFO)
+    log.addHandler(log_handler_console)
+    
+    # File handler
+    log_file = os.path.join(tempfile.gettempdir(), 'onetrain.log')
+    log_handler_file = logging.handlers.RotatingFileHandler(log_file, encoding='utf-8', delay=True)
+    log_handler_file.setFormatter(formatter)
+    log_handler_file.setLevel(logging.INFO)
+    log.addHandler(log_handler_file)
+
+    # Logtail handler
+    if logtail_handler:
+        log.addHandler(logtail_handler)
+    
+    log.info('Logger configured')
+
 
 def set_path(args: TrainArgs):
     if args.onetrainer:
@@ -101,7 +142,7 @@ def clean_dict(d, args: TrainArgs):
 
 
 def buckets(args: TrainArgs):
-    set_path(args)
+    #set_path(args)
     from modules.module.BaseImageCaptionModel import BaseImageCaptionModel # pylint: disable=import-error
     info.samples = BaseImageCaptionModel._BaseImageCaptionModel__get_sample_filenames(args.input) # pylint: disable=protected-access
     info.buckets = {}
@@ -119,7 +160,7 @@ def caption(args: TrainArgs):
     if not args.caption:
         return
 
-    set_path(args)
+    #set_path(args)
     import torch
     import accelerate
     from modules.module.Blip2Model import Blip2Model # pylint: disable=import-error
@@ -171,7 +212,7 @@ def caption(args: TrainArgs):
 
 
 def set_config(args: TrainArgs):
-    set_path(args)
+    #set_path(args)
     from modules.util.config.TrainConfig import TrainConfig # pylint: disable=import-error
     import templates
 
@@ -179,45 +220,48 @@ def set_config(args: TrainArgs):
         with open(args.config, encoding='utf-8') as f:
             # config_json = json.load(f)
             pass
-    if args.type:
+    if getattr(args, 'type', None):
         templates.config['model_type'] = "STABLE_DIFFUSION_XL_10_BASE" if args.type == 'sdxl' else 'STABLE_DIFFUSION_15'
-    if args.model:
+    if getattr(args, 'model', None):
         templates.config['base_model_name'] = args.model
-    if args.optimizer:
+    if getattr(args, 'optimizer', None):
         templates.config['optimizer']['optimizer'] = args.optimizer
-    if args.scheduler:
+    if getattr(args, 'scheduler', None):
         templates.config['learning_rate_scheduler'] = args.scheduler
-    if args.rank:
+    if getattr(args, 'rank', None):
         templates.config['lora_rank'] = args.rank
-    if args.alpha:
+    if getattr(args, 'alpha', None):
         templates.config['lora_alpha'] = args.alpha
-    if args.batch:
+    if getattr(args, 'batch', None):
         templates.config['batch_size'] = args.batch
-    if args.accumulation:
+    if getattr(args, 'accumulation', None):
         templates.config['gradient_accumulation_steps'] = args.accumulation
-    if args.resolution:
+    if getattr(args, 'resolution', None):
         templates.config['resolution'] = str(args.resolution)
-    if args.epochs:
+    if getattr(args, 'epochs', None):
         templates.config['epochs'] = args.epochs
-    if args.triton:
+    if getattr(args, 'triton', None):
         templates.config['optimizer.use_triton'] = True
-    if args.resume:
+    if getattr(args, 'resume', None):
         templates.config['continue_last_backup'] = True
-    if args.te:
+    if getattr(args, 'te', None):
         templates.config['text_encoder']['train'] = True
-    if args.bias:
+    if getattr(args, 'bias', None):
         templates.config['optimizer']['use_bias_correction'] = True
-    if args.backup:
+    if getattr(args, 'backup', None):
         templates.config['backup_after'] = int(templates.config['epochs'] / args.backup)
         templates.config['backup_after_unit'] = 'EPOCH'
-    if args.save:
+    if getattr(args, 'save', None):
         templates.config['save_after'] = int(templates.config['epochs'] / args.save)
         templates.config['save_after_unit'] = 'EPOCH'
     templates.config['debug_dir'] = os.path.join(args.tmp, 'debug')
     templates.config['workspace_dir'] = os.path.join(args.tmp, 'workspace')
     templates.config['cache_dir'] = os.path.join(args.tmp, 'cache')
     templates.config['concept_file_name'] = os.path.join(args.tmp, 'concept.json')
-    templates.config['output_model_destination'] = args.output or os.path.join(args.tmp, f'{args.concept}.safetensors')
+    if getattr(args, 'output', None):
+        templates.config['output_model_destination'] = args.output
+    else:
+        templates.config['output_model_destination'] = os.path.join(args.tmp, f'{args.concept}.safetensors')
     templates.config['sample_definition_file_name'] = os.path.join(args.tmp, 'samples.json')
 
     config = TrainConfig.default_values()
@@ -230,7 +274,7 @@ def set_config(args: TrainArgs):
         templates.concepts[0]["name"] = args.concept
         templates.concepts[0]["path"] = args.input
         templates.concepts[0]["text"]["prompt_path"] = args.input
-        if args.resolution:
+        if getattr(args, 'resolution', None):
             templates.concepts[0]["image"]["enable_resolution_override"] = True
             templates.concepts[0]["image"]["resolution_override"] = str(config.resolution)
         log.info(f'concepts: name={args.concept} file={config.concept_file_name}')
@@ -244,18 +288,21 @@ def set_config(args: TrainArgs):
 
 def train(args: TrainArgs):
     if not args.train:
+        log.info("returning from train because no train arg")
         return
 
-    set_path(args)
+    log.info("setting path") # set path causes logging issues
+    #set_path(args)
+    log.info("setting buckets")
     buckets(args)
 
-    from modules.util.callbacks.TrainCallbacks import TrainCallbacks # pylint: disable=import-error
-    from modules.util.commands.TrainCommands import TrainCommands # pylint: disable=import-error
-    from modules.trainer.GenericTrainer import GenericTrainer # pylint: disable=import-error
+    info.concept = args.concept
+
+    #log.info("imported training modules")
 
     def train_progress_callback(p, max_sample, max_epoch):
         ts = time.time()
-        info.progress = p
+        info.progress = p.filename_string()
         total = max_sample * max_epoch
         info.complete = int(100 * p.global_step / total)
         its = p.global_step / (ts - info.start)
@@ -266,22 +313,30 @@ def train(args: TrainArgs):
         if s not in ['training', 'starting epoch/caching']:
             log.info(f'update: {s}')
 
-    info.busy = True
-    callbacks = TrainCallbacks()
-    callbacks.set_on_update_status(log_update)
-    callbacks.set_on_update_train_progress(train_progress_callback)
-    commands = TrainCommands()
-    config, config_json = set_config(args)
-    log.info(f'method={config.training_method} type={config.model_type}')
-    log.info(f'model={config.base_model_name}')
+    try:
+        info.busy = True
+        callbacks = TrainCallbacks()
+        callbacks.set_on_update_status(log_update)
+        callbacks.set_on_update_train_progress(train_progress_callback)
+        commands = TrainCommands()
+        config, config_json = set_config(args)
+        log.info(f'method={config.training_method} type={config.model_type}')
+        log.info(f'model={config.base_model_name}')
 
-    trainer = GenericTrainer(config, callbacks, commands)
-    if not args.nopbar:
-        task = pbar.add_task(description="train", text="", total=100)
-    info.start = time.time()
+        trainer = GenericTrainer(config, callbacks, commands)
+        if not args.nopbar:
+            task = pbar.add_task(description="train", text="", total=100)
+        info.start = time.time()
+
+    except Exception as e:
+        log.info(f"setup error {e}")
+        info.status = 'failed'
+        info.busy = False
+        return
 
     try:
         log.info('train: init')
+        info.status = 'in progress'
         trainer.start()
         del trainer.model.model_spec.thumbnail
         trainer.model.model_spec.author = args.author
@@ -298,10 +353,12 @@ def train(args: TrainArgs):
             time.sleep(1)
             trainer.train()
         trainer.end()
+        info.status = 'completed'
         log.info(f'save: {trainer.config.output_model_destination}')
         log.info('train: completed')
     except Exception as e:
-        log.error(f'train: error={e}')
+        info.status = 'failed'
+        log.error(f'train: error={e} trace={traceback.format_exc()}')
 
     info.busy = False
     if not args.nopbar:
@@ -345,14 +402,7 @@ if __name__ == '__main__':
     parsed = parser.parse_args()
 
     os.makedirs(parsed.tmp, exist_ok=True)
-    log_handler_console = RichHandler(show_time=True, omit_repeated_times=False, show_level=True, show_path=False, markup=False, rich_tracebacks=True, log_time_format='%H:%M:%S-%f', level=logging.INFO, console=console)
-    log_handler_console.setLevel(logging.INFO)
-    log.addHandler(log_handler_console)
-    log_file = parsed.log or os.path.join(parsed.tmp, 'onetrain.log')
-    log_handler_file = logging.handlers.RotatingFileHandler(log_file, encoding='utf-8', delay=True)
-    log_handler_file.formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(module)s | %(message)s')
-    log_handler_file.setLevel(logging.INFO)
-    log.addHandler(log_handler_file)
+    configure_logger()
     log.info('onetrain')
     log.info(f'log: {log_file}')
     log.info(f'args: {parsed}')

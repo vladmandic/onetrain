@@ -2,6 +2,7 @@
 
 import types
 import os
+import gc
 import sys
 import traceback
 import time
@@ -14,10 +15,13 @@ import logging.handlers
 import functools
 import contextlib
 import cv2
+import torch
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn, TimeElapsedColumn
 from tqdm import tqdm
+
+os.environ.setdefault('PYTORCH_CUDA_ALLOC_CONF', 'garbage_collection_threshold:0.5,max_split_size_mb:512,backend:native')
 
 sys.path.append(os.path.abspath(os.environ.get("ONETRAINER_PATH")))
 
@@ -363,6 +367,15 @@ def train(args: TrainArgs):
     info.busy = False
     if not args.nopbar:
         pbar.remove_task(task)
+
+    # garbage collection
+    gc.collect() # python gc
+    for gpu in [torch.cuda.device(i) for i in range(torch.cuda.device_count())]:
+        with gpu:
+            torch.cuda.empty_cache() # cuda gc
+            torch.cuda.reset_max_memory_allocated()
+            torch.cuda.ipc_collect()
+            print(torch.cuda.memory_summary(device=gpu, abbreviated=False))
 
 
 if __name__ == '__main__':

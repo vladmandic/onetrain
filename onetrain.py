@@ -37,6 +37,8 @@ info = types.SimpleNamespace(
     busy = False,
     complete = 0,
     samples = 0,
+    gpu_mem_allocated = torch.cuda.memory_allocated(),
+    gpu_mem_reserved = torch.cuda.memory_reserved(),
     buckets = {},
     start = None,
     progress = '', # modules.util.TrainProgress.TrainProgress
@@ -309,6 +311,8 @@ def train(args: TrainArgs):
         info.progress = p.filename_string()
         total = max_sample * max_epoch
         info.complete = int(100 * p.global_step / total)
+        info.gpu_mem_allocated = torch.cuda.memory_allocated()
+        info.gpu_mem_reserved = torch.cuda.memory_reserved()
         its = p.global_step / (ts - info.start)
         if not args.nopbar:
             pbar.update(task, completed=info.complete, description="train", text=f'step: {p.global_step} epoch: {p.epoch+1}/{max_epoch} batch: {p.epoch_step} samples: {max_sample} its: {its:.2f}')
@@ -370,6 +374,7 @@ def train(args: TrainArgs):
 
     # garbage collection
     gc.collect() # python gc
+    del trainer
     for gpu in [torch.cuda.device(i) for i in range(torch.cuda.device_count())]:
         with gpu:
             torch.cuda.empty_cache() # cuda gc

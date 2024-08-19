@@ -47,6 +47,7 @@ info = types.SimpleNamespace(
 
 # args inf using functions directly
 class TrainArgs():
+    id: str
     concept: str
     input: str
     train: bool
@@ -302,7 +303,7 @@ def train(args: TrainArgs):
     log.info("setting buckets")
     buckets(args)
 
-    info.concept = args.concept
+    info.concept = args.id
 
     #log.info("imported training modules")
 

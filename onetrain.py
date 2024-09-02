@@ -223,7 +223,7 @@ def set_config(args: TrainArgs):
     from modules.util.config.TrainConfig import TrainConfig # pylint: disable=import-error
     import templates
 
-    if args.config:
+    if getattr(args, 'config', None):
         with open(args.config, encoding='utf-8') as f:
             # config_json = json.load(f)
             pass

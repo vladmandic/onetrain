@@ -391,6 +391,7 @@ if __name__ == '__main__':
     warnings.filterwarnings(action="ignore", category=UserWarning)
 
     parser = argparse.ArgumentParser(description = 'onetrain')
+    parser.add_argument('--id', required=False, type=str, help='training id')
     parser.add_argument('--concept', required=True, type=str, help='concept name')
     parser.add_argument('--input', required=True, type=str, help='folder with training dataset')
     parser.add_argument("--model", required=False, type=str, help='stable diffusion base model')
@@ -423,7 +424,7 @@ if __name__ == '__main__':
     os.makedirs(parsed.tmp, exist_ok=True)
     configure_logger()
     log.info('onetrain')
-    log.info(f'log: {log_file}')
+    # log.info(f'log: {log_file}')
     log.info(f'args: {parsed}')
 
     caption(parsed)

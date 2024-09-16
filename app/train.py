@@ -66,7 +66,7 @@ def set_config(args: TrainArgs):
     train_config.from_dict(config)
 
     with open(os.path.join(args.tmp, 'config.json'), "w", encoding='utf-8') as f:
-        log.info(f'config: file="{os.path.join(args.tmp, "config.json")}"')
+        log.info(f'write config: file="{os.path.join(args.tmp, "config.json")}"')
         json.dump(config, f, indent=2)
 
     with open(train_config.concept_file_name, "w", encoding='utf-8') as f:
@@ -77,12 +77,12 @@ def set_config(args: TrainArgs):
         if args.resolution:
             concepts[0]["image"]["enable_resolution_override"] = True
             concepts[0]["image"]["resolution_override"] = str(train_config.resolution)
-        log.info(f'concepts: file="{train_config.concept_file_name}" name="{args.concept}"')
+        log.info(f'write concepts: file="{train_config.concept_file_name}" name="{args.concept}"')
         json.dump(concepts, f, indent=2)
 
     with open(train_config.sample_definition_file_name, "w", encoding='utf-8') as f:
         samples = get_config('samples')
-        log.info(f'samples: file="{train_config.sample_definition_file_name}"')
+        log.info(f'write samples: file="{train_config.sample_definition_file_name}"')
         json.dump(samples, f, indent=2)
 
     return train_config, config
@@ -134,7 +134,7 @@ def train(args: TrainArgs):
     commands = TrainCommands()
     config, config_json = set_config(args)
     log.info(f'method={config.training_method} type={config.model_type}')
-    log.info(f'model={config.base_model_name}')
+    log.info(f'model="{config.base_model_name}"')
 
     trainer = GenericTrainer(config, callbacks, commands)
     if not args.nopbar:

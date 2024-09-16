@@ -42,10 +42,11 @@ def detect(image, imgsz: int = 640, half: bool = True, augment: bool = True, agn
     for prediction in predictions:
         boxes = prediction.boxes.xyxy.detach().int().cpu().numpy() if prediction.boxes is not None else []
         scores = prediction.boxes.conf.detach().float().cpu().numpy() if prediction.boxes is not None else []
+        scores = [round(score, 2) for score in scores]
         for _score, box in zip(scores, boxes):
             box = box.tolist()
             expand = (box[2] - box[0]) // 4, (box[3] - box[1]) // 4
             box = [max(0, box[0] - expand[0]), max(0, box[1] - expand[1]), min(image.shape[1], box[2] + expand[0]), min(image.shape[0], box[3] + expand[1])]
             face = image[box[1]:box[3], box[0]:box[2]]
             result.append(face)
-    return result
+    return result, scores

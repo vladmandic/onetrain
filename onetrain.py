@@ -13,6 +13,7 @@ if __name__ == '__main__':
     parser.add_argument('--concept', required=True, type=str, help='concept name')
     parser.add_argument('--input', required=True, type=str, help='folder with training dataset')
     parser.add_argument("--model", required=False, type=str, help='stable diffusion base model')
+    parser.add_argument('--reference', required=False, type=str, help='reference image for similarity checks')
     parser.add_argument("--train", default=False, action='store_true', help='run training')
     parser.add_argument("--tag", default=False, action='store_true', help='add tagging info')
     parser.add_argument("--validate", default=False, action='store_true', help='run image validation')
@@ -66,8 +67,12 @@ if __name__ == '__main__':
     if not (os.path.exists(args.model) and os.path.isfile(args.model)):
         log.error(f'model not found: {args.model}')
         exit(1)
-
-    from app.caption import caption
-    caption(args)
-    from app.train import train
-    train(args)
+    if os.path.exists(os.path.join(args.tmp, args.concept)):
+        log.warning(f'concept folder exists: {os.path.join(args.tmp, args.concept)}')
+    try:
+        from app.caption import caption
+        caption(args)
+        from app.train import train
+        train(args)
+    except KeyboardInterrupt:
+        log.error('interrupted')

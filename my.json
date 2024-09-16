@@ -2,7 +2,6 @@
   "caption": [
     "clear",
     "concept",
-    "wdtagger",
     "promptgen"
   ],
   "train": {
@@ -12,10 +11,11 @@
     "batch": 4,
     "epochs": 100,
     "rank": 16,
-    "validate": false,
+    "validate": true,
     "caption": true,
     "tag": true,
     "train": true,
+    "reference": "/home/vlado/generative/Input/nicole-borda/nicole (3).png",
     "debug": true
   }
 }

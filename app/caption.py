@@ -1,4 +1,5 @@
 import os
+import time
 import shutil
 import contextlib
 from app.util import TrainArgs, set_path, info, accelerator
@@ -20,6 +21,7 @@ def copy(args: TrainArgs):
     captions = []
     log.info(f'images copy: input="{args.input}" output="{folder}"')
     log.info(f'validate: config={get_config("validate") if args.validate else None}')
+    t0 = time.time()
     try:
         for file in files:
             f = os.path.join(args.input, file)
@@ -32,6 +34,7 @@ def copy(args: TrainArgs):
                     skipped.append(status)
                     continue
                 else:
+                    log.debug(f'validate failed: {status}')
                     failed.append(status)
                     continue
             tgt = os.path.join(folder, file)
@@ -43,8 +46,8 @@ def copy(args: TrainArgs):
     except Exception as e:
         log.error(f'images: {e}')
     args.input = folder
-    log.info(f'validate: pass={len(passed)} fail={len(failed)} captions={len(captions)} skip={len(skipped)}')
-    log.debug(f'validate failed: {failed}')
+    t1 = time.time()
+    log.info(f'validate: pass={len(passed)} fail={len(failed)} captions={len(captions)} skip={len(skipped)} time={t1-t0:.2f}')
 
 
 def caption_onetrainer(args: TrainArgs, tagger: str = ''):
@@ -193,6 +196,7 @@ def caption(args: TrainArgs):
     folder = os.path.join(args.tmp, args.concept)
     log.info(f'caption: config={captioners}')
 
+    t0 = time.time()
     for captioner in captioners:
         log.info(f'caption: run={captioner} folder="{folder}"')
         if captioner == 'clear':
@@ -200,7 +204,6 @@ def caption(args: TrainArgs):
                 if f.endswith('.txt'):
                     os.remove(os.path.join(folder, f))
         if captioner == 'concept':
-            log.info(f'caption: concept="{args.concept}"')
             for f in os.listdir(folder):
                 ext = os.path.splitext(f)[1].lower()
                 if ext in ['.jpg', '.jpeg', '.png', '.webp']:
@@ -215,6 +218,9 @@ def caption(args: TrainArgs):
             caption_onetrainer(args, 'blip')
         if captioner == 'wd14':
             caption_onetrainer(args, 'wd14')
+    t1 = time.time()
+    if len(captioners) > 0:
+        log.info(f'caption: time={t1-t0:.2f}')
 
     for f in os.listdir(folder): # fix formatting
         if f.endswith('.txt'):
@@ -229,6 +235,7 @@ def caption(args: TrainArgs):
 
 def tags(args: TrainArgs):
     if args.tag:
+        t0 = time.time()
         count = len(all_tags)
         threshold = get_config('tag') * count
         all_text = ', '.join(all_tags)
@@ -239,7 +246,8 @@ def tags(args: TrainArgs):
         _tags = {k: v for k, v in sorted(_tags.items(), key=lambda item: item[1], reverse=True) if v >= threshold }
         _tags.pop(args.concept, None)
         _tags = { args.concept: count, **_tags }
-        log.info(f'caption: theshold={threshold} text={len(all_text)} words={len(all_words)} tags={len(all_tags)}')
+        t1 = time.time()
+        log.info(f'caption: theshold={threshold} text={len(all_text)} words={len(all_words)} tags={len(all_tags)} time={t1-t0:.2f}')
         log.info(f'caption: tags={_tags}')
         return _tags
     return {}

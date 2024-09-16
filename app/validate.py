@@ -4,10 +4,11 @@ import os
 import cv2
 import torch
 from app.util import TrainArgs, Obj
-from app.defaults import validate as validate_config
+from app.config import get_config
 
 
-config = Obj(validate_config)
+config = get_config('validate')
+config = Obj(config)
 
 
 def dynamicrange(image, epsilon=1e-10):

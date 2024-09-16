@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 pbar = None
 
 
-def init(log_file: str = None):
+def init_logger(log_file: str = None):
     global pbar # pylint: disable=global-statement
     logging.basicConfig(level=logging.DEBUG, handlers=[logging.NullHandler()])
     warnings.filterwarnings(action="ignore", category=DeprecationWarning)

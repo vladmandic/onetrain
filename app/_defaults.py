@@ -1,3 +1,5 @@
+# NO LONGER USED
+
 validate = {
     "min_size": 500000, # 0.5 mega-pixel
     "min_width": 500,

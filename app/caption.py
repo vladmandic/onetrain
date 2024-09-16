@@ -3,7 +3,11 @@ import shutil
 import contextlib
 from app.util import TrainArgs, set_path, info, accelerator
 from app.logger import log, pbar
-from app.validate import validate, config
+from app.validate import validate
+from app.config import get_config
+
+
+all_tags = []
 
 
 def copy(args: TrainArgs):
@@ -15,7 +19,7 @@ def copy(args: TrainArgs):
     skipped = []
     captions = []
     log.info(f'images copy: input="{args.input}" output="{folder}"')
-    log.info(f'validate: config={config.__dict__ if args.validate else None}')
+    log.info(f'validate: config={get_config("validate") if args.validate else None}')
     try:
         for file in files:
             f = os.path.join(args.input, file)
@@ -116,16 +120,16 @@ def caption_wdtagger(args: TrainArgs):
         for i, f in enumerate(files):
             file = os.path.join(folder, f)
             items = pipe(file, top_k=15)
-            tags = []
+            words = []
             for item in items:
                 k, v = item['label'], item['score']
                 if 'rating:sensitive' in k or v > 0.05:
                     k = k.replace(' ', '_').replace('rating:', '')
-                    tags.append(k)
-            # log.debug(f'caption: "{f}"={tags}')
+                    words.append(k)
+            # log.debug(f'caption: "{f}"={words}')
             tag = os.path.splitext(file)[0] + '.txt'
             with open(tag, 'a', encoding='utf8') as f:
-                txt = ', '.join(tags)
+                txt = ', '.join(words)
                 f.write(f'{txt}, ')
             if not args.nopbar:
                 pbar.update(task, completed=i+1, text=f'{i+1}/{len(files)} images')
@@ -183,10 +187,9 @@ def caption_promptgen(args):
 
 
 def caption(args: TrainArgs):
+    all_tags.clear()
     copy(args)
-    if not args.caption:
-        return
-    from app.defaults import caption as captioners
+    captioners = get_config('caption') if args.caption else []
     folder = os.path.join(args.tmp, args.concept)
     log.info(f'caption: config={captioners}')
 
@@ -219,5 +222,24 @@ def caption(args: TrainArgs):
             with open(fn, 'r', encoding='utf8') as file:
                 tag = file.read()
             tag = tag.replace('\n', ' ').replace('  ', ' ').replace(' ,', ',')[:-2].strip()
+            all_tags.append(tag)
             with open(fn, 'w', encoding='utf8') as file:
                 file.write(tag)
+
+
+def tags(args: TrainArgs):
+    if args.tag:
+        count = len(all_tags)
+        threshold = get_config('tag') * count
+        all_text = ', '.join(all_tags)
+        all_words = [w.strip() for w in all_text.split(',')]
+        all_tags.clear()
+        all_tags.extend([w for w in all_words if ' ' not in w and len(w) > 1])
+        _tags = {item: all_tags.count(item) for item in set(all_tags)}
+        _tags = {k: v for k, v in sorted(_tags.items(), key=lambda item: item[1], reverse=True) if v >= threshold }
+        _tags.pop(args.concept, None)
+        _tags = { args.concept: count, **_tags }
+        log.info(f'caption: theshold={threshold} text={len(all_text)} words={len(all_words)} tags={len(all_tags)}')
+        log.info(f'caption: tags={_tags}')
+        return _tags
+    return {}

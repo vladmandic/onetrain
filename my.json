@@ -1,0 +1,21 @@
+{
+  "caption": [
+    "clear",
+    "concept",
+    "wdtagger",
+    "promptgen"
+  ],
+  "train": {
+    "log": "tmp/onetrain.log",
+    "type": "sdxl",
+    "author": "vlado",
+    "batch": 4,
+    "epochs": 100,
+    "rank": 16,
+    "validate": false,
+    "caption": true,
+    "tag": true,
+    "train": true,
+    "debug": true
+  }
+}

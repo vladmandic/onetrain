@@ -1,0 +1,57 @@
+exclude = [
+    "venv",
+    ".git",
+    ".ruff_cache",
+    ".vscode",
+]
+line-length = 300
+indent-width = 4
+target-version = "py39"
+
+[lint]
+select = [
+  "F",
+  "E",
+  "W",
+  "C",
+  "B",
+  "I",
+  "YTT",
+  "ASYNC",
+  "RUF",
+  "AIR",
+  "NPY",
+  "C4",
+  "T10",
+  "EXE",
+  "ISC",
+  "ICN",
+  "RSE",
+  "TCH",
+  "TID",
+  "INT",
+  "PLE",
+]
+ignore = [
+  "B010",
+  "E701",
+  "E731",
+  "RUF012",
+  "RUF013",
+  "T100",
+  "E722",
+  "I001",
+]
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+
+[lint.mccabe]
+max-complexity = 30

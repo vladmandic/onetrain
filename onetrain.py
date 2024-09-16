@@ -4,9 +4,7 @@ import os
 import argparse
 import tempfile
 from app.util import info, accelerator # pylint: disable=unused-import # noqa: F401
-from app.validate import config as validation_config # pylint: disable=unused-import # noqa: F401
-from app.defaults import concepts as concepts_config # pylint: disable=unused-import # noqa: F401
-from app.defaults import config as train_config # pylint: disable=unused-import # noqa: F401
+from app.config import get_config, init_config # pylint: disable=unused-import # noqa: F401
 
 
 args = None
@@ -16,13 +14,14 @@ if __name__ == '__main__':
     parser.add_argument('--input', required=True, type=str, help='folder with training dataset')
     parser.add_argument("--model", required=False, type=str, help='stable diffusion base model')
     parser.add_argument("--train", default=False, action='store_true', help='run training')
+    parser.add_argument("--tag", default=False, action='store_true', help='add tagging info')
     parser.add_argument("--validate", default=False, action='store_true', help='run image validation')
     parser.add_argument("--caption", default=False, action='store_true', help='run captioning')
     parser.add_argument("--triton", default=False, action='store_true', help='use triton')
     parser.add_argument("--resume", default=False, action='store_true', help='resume training from last backup')
     parser.add_argument("--te", default=False, action='store_true', help='train text encoder')
     parser.add_argument("--bias", default=False, action='store_true', help='use bias correction')
-    parser.add_argument("--config", required=False, type=str, help='use specific onetrainer config file')
+    parser.add_argument("--config", required=False, type=str, help='use specific config file')
     parser.add_argument("--type", required=False, choices=['sd', 'sdxl', 'flux'], help='model type')
     parser.add_argument('--log', required=False, type=str, help='specify log file')
     parser.add_argument('--output', required=False, type=str, help='specify output location')
@@ -48,13 +47,14 @@ if __name__ == '__main__':
     os.makedirs(args.tmp, exist_ok=True)
     log_file = args.log or os.path.join(args.tmp, 'onetrain.log')
 
-    from app.logger import log, init
-    init(log_file)
+    from app.logger import log, init_logger
+    init_logger(log_file)
+    log.info('onetrain')
+    log.info(f'log: {log_file}')
+    init_config(args)
     if args.debug:
         log.setLevel('DEBUG')
         log.debug('debug logging enabled')
-    log.info('onetrain')
-    log.info(f'log: {log_file}')
     log.info(f'args: {args}')
     log.info(f'device: {accelerator.device}')
     if not (os.path.exists(args.input) and os.path.isdir(args.input)):

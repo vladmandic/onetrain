@@ -2,87 +2,90 @@ import os
 import time
 import json
 import contextlib
+import datetime
 import cv2
 from app.logger import log, pbar
 from app.util import TrainArgs, set_path, clean_dict, info
+from app.config import get_config
+from app.caption import tags
 
 
 def set_config(args: TrainArgs):
     from modules.util.config.TrainConfig import TrainConfig # pylint: disable=import-error
-    import app.defaults as defaults
+    config = get_config('onetrainer')
 
-    if args.config:
-        with open(args.config, encoding='utf-8') as f:
-            # config_json = json.load(f)
-            pass
     if args.type:
         if args.type == 'sdxl':
-            defaults.config['model_type'] = "STABLE_DIFFUSION_XL_10_BASE"
+            config['model_type'] = "STABLE_DIFFUSION_XL_10_BASE"
         elif args.type == 'sd':
-            defaults.config['model_type'] = 'STABLE_DIFFUSION_15'
+            config['model_type'] = 'STABLE_DIFFUSION_15'
         elif args.type == 'flux':
-            defaults.config['model_type'] = 'FLUX_DEV_1'
+            config['model_type'] = 'FLUX_DEV_1'
         else:
             log.warning(f'Unknown Model type: {args.type}')
     if args.model:
-        defaults.config['base_model_name'] = args.model
+        config['base_model_name'] = args.model
     if args.optimizer:
-        defaults.config['optimizer']['optimizer'] = args.optimizer
+        config['optimizer']['optimizer'] = args.optimizer
     if args.scheduler:
-        defaults.config['learning_rate_scheduler'] = args.scheduler
+        config['learning_rate_scheduler'] = args.scheduler
     if args.rank:
-        defaults.config['lora_rank'] = args.rank
+        config['lora_rank'] = args.rank
     if args.alpha:
-        defaults.config['lora_alpha'] = args.alpha
+        config['lora_alpha'] = args.alpha
     if args.batch:
-        defaults.config['batch_size'] = args.batch
+        config['batch_size'] = args.batch
     if args.accumulation:
-        defaults.config['gradient_accumulation_steps'] = args.accumulation
+        config['gradient_accumulation_steps'] = args.accumulation
     if args.resolution:
-        defaults.config['resolution'] = str(args.resolution)
+        config['resolution'] = str(args.resolution)
     if args.epochs:
-        defaults.config['epochs'] = args.epochs
+        config['epochs'] = args.epochs
     if args.triton:
-        defaults.config['optimizer.use_triton'] = True
+        config['optimizer.use_triton'] = True
     if args.resume:
-        defaults.config['continue_last_backup'] = True
+        config['continue_last_backup'] = True
     if args.te:
-        defaults.config['text_encoder']['train'] = True
+        config['text_encoder']['train'] = True
     if args.bias:
-        defaults.config['optimizer']['use_bias_correction'] = True
+        config['optimizer']['use_bias_correction'] = True
     if args.backup:
-        defaults.config['backup_after'] = int(defaults.config['epochs'] / args.backup)
-        defaults.config['backup_after_unit'] = 'EPOCH'
+        config['backup_after'] = int(config['epochs'] / args.backup)
+        config['backup_after_unit'] = 'EPOCH'
     if args.save:
-        defaults.config['save_after'] = int(defaults.config['epochs'] / args.save)
-        defaults.config['save_after_unit'] = 'EPOCH'
-    defaults.config['debug_dir'] = os.path.join(args.tmp, 'debug')
-    defaults.config['workspace_dir'] = os.path.join(args.tmp, 'workspace')
-    defaults.config['cache_dir'] = os.path.join(args.tmp, 'cache')
-    defaults.config['concept_file_name'] = os.path.join(args.tmp, 'concept.json')
-    defaults.config['output_model_destination'] = args.output or os.path.join(args.tmp, f'{args.concept}.safetensors')
-    defaults.config['sample_definition_file_name'] = os.path.join(args.tmp, 'samples.json')
+        config['save_after'] = int(config['epochs'] / args.save)
+        config['save_after_unit'] = 'EPOCH'
+    config['debug_dir'] = os.path.join(args.tmp, 'debug')
+    config['workspace_dir'] = os.path.join(args.tmp, 'workspace')
+    config['cache_dir'] = os.path.join(args.tmp, 'cache')
+    config['concept_file_name'] = os.path.join(args.tmp, 'concept.json')
+    config['output_model_destination'] = args.output or os.path.join(args.tmp, f'{args.concept}.safetensors')
+    config['sample_definition_file_name'] = os.path.join(args.tmp, 'samples.json')
 
-    config = TrainConfig.default_values()
-    config.from_dict(defaults.config)
+    train_config = TrainConfig.default_values()
+    train_config.from_dict(config)
 
     with open(os.path.join(args.tmp, 'config.json'), "w", encoding='utf-8') as f:
-        log.info(f'config: file={os.path.join(args.tmp, "config.json")}')
-        json.dump(defaults.config, f, indent=2)
-    with open(config.concept_file_name, "w", encoding='utf-8') as f:
-        defaults.concepts[0]["name"] = args.concept
-        defaults.concepts[0]["path"] = args.input
-        defaults.concepts[0]["text"]["prompt_path"] = args.input
-        if args.resolution:
-            defaults.concepts[0]["image"]["enable_resolution_override"] = True
-            defaults.concepts[0]["image"]["resolution_override"] = str(config.resolution)
-        log.info(f'concepts: name={args.concept} file={config.concept_file_name}')
-        json.dump(defaults.concepts, f, indent=2)
-    with open(config.sample_definition_file_name, "w", encoding='utf-8') as f:
-        log.info(f'samples: file={config.sample_definition_file_name}')
-        json.dump(defaults.samples, f, indent=2)
+        log.info(f'config: file="{os.path.join(args.tmp, "config.json")}"')
+        json.dump(config, f, indent=2)
 
-    return config, defaults.config
+    with open(train_config.concept_file_name, "w", encoding='utf-8') as f:
+        concepts = get_config('concepts')
+        concepts[0]["name"] = args.concept
+        concepts[0]["path"] = args.input
+        concepts[0]["text"]["prompt_path"] = args.input
+        if args.resolution:
+            concepts[0]["image"]["enable_resolution_override"] = True
+            concepts[0]["image"]["resolution_override"] = str(train_config.resolution)
+        log.info(f'concepts: file="{train_config.concept_file_name}" name="{args.concept}"')
+        json.dump(concepts, f, indent=2)
+
+    with open(train_config.sample_definition_file_name, "w", encoding='utf-8') as f:
+        samples = get_config('samples')
+        log.info(f'samples: file="{train_config.sample_definition_file_name}"')
+        json.dump(samples, f, indent=2)
+
+    return train_config, config
 
 
 def buckets(args: TrainArgs):
@@ -143,14 +146,22 @@ def train(args: TrainArgs):
         trainer.start()
         del trainer.model.model_spec.thumbnail
         trainer.model.model_spec.author = args.author
-        trainer.model.model_spec.date = 'today'
-        trainer.model.model_spec.config = json.dumps(clean_dict(config_json, args))
+        trainer.model.model_spec.title = args.concept
+        trainer.model.model_spec.date = datetime.datetime.now().astimezone().replace(microsecond=0).isoformat()
+        config_metadata = json.dumps(clean_dict(config_json))
+        trainer.model.model_spec.base_model = os.path.basename(config_json.get('base_model_name', 'unknown'))
+        trainer.model.model_spec.config = config_metadata.replace('\\"', "").replace('"', "")
         trainer.model.model_spec.concepts = json.dumps({
             "name": args.concept,
             "images": len(info.samples),
             "buckets": info.buckets,
         })
-        log.info(f'optimizer={config.optimizer.optimizer} scheduler={config.learning_rate_scheduler} rank={config.lora_rank} alpha={config.lora_alpha} batch={config.batch_size} accumulation={config.gradient_accumulation_steps} epochs={config.epochs}')
+        del trainer.model.model_spec.hash_sha256
+        del trainer.model.model_spec.usage_hint
+        trainer.model.model_spec.module = "networks.lora"
+        trainer.model.model_spec.tags = json.dumps(tags(args))
+        log.debug('metadata: ' + json.dumps(trainer.model.model_spec.__dict__, indent=2)) # pylint: disable=logging-not-lazy
+        log.info(f'settings: optimizer={config.optimizer.optimizer} scheduler={config.learning_rate_scheduler} rank={config.lora_rank} alpha={config.lora_alpha} batch={config.batch_size} accumulation={config.gradient_accumulation_steps} epochs={config.epochs}')
         log.info('train: start')
         with pbar if not args.nopbar else contextlib.nullcontext():
             time.sleep(1)

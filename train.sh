@@ -25,17 +25,7 @@ cd "${ONETRAINER}"
 "${CUR}"/onetrain.py \
   --onetrainer $ONETRAINER \
   --model $MODEL \
-  --log tmp/onetrain.log \
-  --tmp tmp \
-  --type sdxl \
-  --batch 8 \
-  --epochs 100 \
-  --rank 16 \
-  --validate \
-  --caption \
-  --train \
-  --debug \
-  --author vlado \
+  --config my.json \
   --concept $ACTOR \
   --input $INPUT/$ACTOR/ \
   --output $OUTPUT/$ACTOR.safetensors \

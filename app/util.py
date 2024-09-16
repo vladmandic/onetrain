@@ -62,19 +62,19 @@ def set_path(args: TrainArgs):
         sys.path.append(os.getcwd())
 
 
-def clean_dict(d, args: TrainArgs):
+def clean_dict(d: TrainArgs):
     def maybe_none(v):
         if isinstance(v, float) or isinstance(v, int):
             return v > 0
         if isinstance(v, str):
-            return v not in ['NONE', 'NEVER', 'EPOCH', ''] and not v.startswith('__') and not v.startswith('sample') and args.tmp not in v
+            return v not in ['NONE', 'NEVER', 'EPOCH', ''] and not v.startswith('__') and not v.startswith('sample') and not v.endswith('_dir') and not v.startswith('embedding') and '/' not in v
         if isinstance(v, bool):
             return v
         return v
 
     if isinstance(d, dict):
-        return dict((k, clean_dict(v, args)) for k, v in d.items() if maybe_none(k) and maybe_none(v) and clean_dict(v, args))
+        return dict((k, clean_dict(v)) for k, v in d.items() if maybe_none(k) and maybe_none(v) and clean_dict(v)) # noqa: C402
     elif isinstance(d, list):
-        return [clean_dict(v, args) for v in d if maybe_none(v) and clean_dict(v, args)]
+        return [clean_dict(v) for v in d if maybe_none(v) and clean_dict(v)]
     else:
         return d

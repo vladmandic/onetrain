@@ -16,14 +16,21 @@ info = types.SimpleNamespace(
     busy = False,
     complete = 0,
     samples = 0,
+    step = None,
+    epoch = None,
     buckets = {},
     start = None,
+    update = None,
+    status = '',
     progress = None, # modules.util.TrainProgress.TrainProgress
+    validation = {}, # metadata from validation
+    metadata = {}, # metadata from training
 )
 
 
 # args inf using functions directly
 class TrainArgs():
+    format: str
     concept: str
     input: str
     train: bool

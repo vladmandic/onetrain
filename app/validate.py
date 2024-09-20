@@ -7,8 +7,7 @@ from app.util import TrainArgs, Obj
 from app.config import get_config
 
 
-config = get_config('validate')
-config = Obj(config)
+config = None
 
 
 def dynamicrange(image, epsilon=1e-10):
@@ -65,9 +64,12 @@ def similarity(reference, image):
         raise ValueError(f'face-similarity: {round(1 - res, 2)}')
 
 
-def validate(f: str, args: TrainArgs):
+def validate(f, image, args: TrainArgs):
+    global config # pylint: disable=global-statement
+    config = get_config('validate')
+    config = Obj(config)
     try:
-        image = cv2.imread(f)
+        # image = cv2.imread(f)
         if image is None:
             raise ValueError('invalid')
         h, w, _c = image.shape

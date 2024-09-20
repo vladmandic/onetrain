@@ -35,3 +35,4 @@ torchvision
 tqdm
 transformers
 ultralytics
+pi_heif

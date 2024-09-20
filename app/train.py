@@ -4,7 +4,7 @@ import json
 import contextlib
 import datetime
 import cv2
-from app.logger import log, pbar
+from app.logger import log
 from app.util import TrainArgs, set_path, clean_dict, info
 from app.config import get_config
 from app.caption import tags
@@ -107,9 +107,11 @@ def train(args: TrainArgs):
     if not args.train:
         return
 
+    info.status = 'start'
     set_path(args)
     buckets(args)
 
+    from app.logger import pbar
     from modules.util.callbacks.TrainCallbacks import TrainCallbacks # pylint: disable=import-error
     from modules.util.commands.TrainCommands import TrainCommands # pylint: disable=import-error
     from modules.trainer.GenericTrainer import GenericTrainer # pylint: disable=import-error
@@ -119,15 +121,22 @@ def train(args: TrainArgs):
         info.progress = p
         total = max_sample * max_epoch
         info.complete = int(100 * p.global_step / total)
+        info.epoch = p.epoch
+        info.step = p.global_step
+        info.update = time.time()
+        info.status = 'train'
         its = p.global_step / (ts - info.start)
         if not args.nopbar:
             pbar.update(task, completed=info.complete, description="train", text=f'step: {p.global_step} epoch: {p.epoch+1}/{max_epoch} batch: {p.epoch_step} samples: {max_sample} its: {its:.2f}')
 
     def log_update(s: str):
+        if 'loading' in s:
+            info.status = 'loading'
         if s not in ['training', 'starting epoch/caching']:
             log.info(f'update: {s}')
 
     info.busy = True
+    info.concept = args.concept
     callbacks = TrainCallbacks()
     callbacks.set_on_update_status(log_update)
     callbacks.set_on_update_train_progress(train_progress_callback)
@@ -140,6 +149,7 @@ def train(args: TrainArgs):
     if not args.nopbar:
         task = pbar.add_task(description="train", text="", total=100)
     info.start = time.time()
+    info.status = 'starting'
 
     try:
         log.info('train: init')
@@ -160,18 +170,30 @@ def train(args: TrainArgs):
         del trainer.model.model_spec.usage_hint
         trainer.model.model_spec.module = "networks.lora"
         trainer.model.model_spec.tags = json.dumps(tags(args))
-        log.debug('metadata: ' + json.dumps(trainer.model.model_spec.__dict__, indent=2)) # pylint: disable=logging-not-lazy
+        info.metadata = trainer.model.model_spec
+        log.debug(f'metadata: {json.dumps(trainer.model.model_spec.__dict__, indent=2)}')
         log.info(f'settings: optimizer={config.optimizer.optimizer} scheduler={config.learning_rate_scheduler} rank={config.lora_rank} alpha={config.lora_alpha} batch={config.batch_size} accumulation={config.gradient_accumulation_steps} epochs={config.epochs}')
         log.info('train: start')
         with pbar if not args.nopbar else contextlib.nullcontext():
             time.sleep(1)
             trainer.train()
         trainer.end()
-        log.info(f'save: {trainer.config.output_model_destination}')
-        log.info('train: completed')
     except Exception as e:
         log.error(f'train: error={e}')
 
-    info.busy = False
     if not args.nopbar:
         pbar.remove_task(task)
+    del info.metadata
+    info.busy = False
+    log.debug(f'info: {info}')
+    if info.step is None or info.epoch is None:
+        info.status = 'failed'
+        log.error('train: failed')
+        return
+    log.info(f'save: {trainer.config.output_model_destination}')
+    if info.epoch == args.epochs:
+        info.status = 'partial'
+        log.info('train: completed')
+    else:
+        info.status = 'completed'
+        log.info('train: completed partial')

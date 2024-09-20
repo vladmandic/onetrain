@@ -1,58 +1,18 @@
 import os
 import time
-import shutil
 import contextlib
 from app.util import TrainArgs, set_path, info, accelerator
-from app.logger import log, pbar
-from app.validate import validate
+from app.logger import log
 from app.config import get_config
 
 
 all_tags = []
 
 
-def copy(args: TrainArgs):
-    folder = os.path.join(args.tmp, args.concept)
-    os.makedirs(folder, exist_ok=True)
-    files = os.listdir(args.input)
-    passed = []
-    failed = []
-    skipped = []
-    captions = []
-    log.info(f'images copy: input="{args.input}" output="{folder}"')
-    log.info(f'validate: config={get_config("validate") if args.validate else None}')
-    t0 = time.time()
-    try:
-        for file in files:
-            f = os.path.join(args.input, file)
-            if f.endswith('.txt'):
-                status = None if not args.caption else { file: 'skip caption' }
-            else:
-                status = validate(f, args)
-            if status is not None:
-                if any('skip' in v for v in status.values()):
-                    skipped.append(status)
-                    continue
-                else:
-                    log.debug(f'validate failed: {status}')
-                    failed.append(status)
-                    continue
-            tgt = os.path.join(folder, file)
-            shutil.copy(f, tgt)
-            if f.endswith('.txt'):
-                captions.append(f)
-            else:
-                passed.append(f)
-    except Exception as e:
-        log.error(f'images: {e}')
-    args.input = folder
-    t1 = time.time()
-    log.info(f'validate: pass={len(passed)} fail={len(failed)} captions={len(captions)} skip={len(skipped)} time={t1-t0:.2f}')
-
-
 def caption_onetrainer(args: TrainArgs, tagger: str = ''):
     set_path(args)
     import torch
+    from app.logger import pbar
 
     def caption_progress_callback(current, total):
         if not args.nopbar:
@@ -106,6 +66,7 @@ def caption_onetrainer(args: TrainArgs, tagger: str = ''):
 
 def caption_wdtagger(args: TrainArgs):
     from transformers import pipeline
+    from app.logger import pbar
     folder = os.path.join(args.tmp, args.concept)
     model = "p1atdev/wd-swinv2-tagger-v3-hf"
     log.info(f'caption: model="{model}" path="{folder}"')
@@ -145,6 +106,7 @@ def caption_wdtagger(args: TrainArgs):
 def caption_promptgen(args):
     import cv2
     import transformers
+    from app.logger import pbar
 
     folder = os.path.join(args.tmp, args.concept)
     repo = "MiaoshouAI/Florence-2-base-PromptGen-v1.5"
@@ -156,7 +118,7 @@ def caption_promptgen(args):
     prompt = "<MORE_DETAILED_CAPTION>"
 
     files = os.listdir(folder)
-    files = [f for f in files if os.path.splitext(f)[1].lower() in ['.jpg', '.jpeg', '.png', '.webp']]
+    files = [f for f in files if os.path.splitext(f)[1].lower() == args.format]
     if not args.nopbar:
         task = pbar.add_task(description="caption promptgen", text="", total=len(files))
     with pbar if not args.nopbar else contextlib.nullcontext():
@@ -190,8 +152,8 @@ def caption_promptgen(args):
 
 
 def caption(args: TrainArgs):
+    info.status = 'caption'
     all_tags.clear()
-    copy(args)
     captioners = get_config('caption') if args.caption else []
     folder = os.path.join(args.tmp, args.concept)
     log.info(f'caption: config={captioners}')
@@ -206,7 +168,7 @@ def caption(args: TrainArgs):
         if captioner == 'concept':
             for f in os.listdir(folder):
                 ext = os.path.splitext(f)[1].lower()
-                if ext in ['.jpg', '.jpeg', '.png', '.webp']:
+                if ext in [args.format]:
                     fn = os.path.splitext(f)[0] + '.txt'
                     with open(os.path.join(folder, fn), 'a', encoding='utf8') as file:
                         file.write(f'{args.concept}, ')
@@ -234,6 +196,7 @@ def caption(args: TrainArgs):
 
 
 def tags(args: TrainArgs):
+    info.status = 'tag'
     if args.tag:
         t0 = time.time()
         count = len(all_tags)

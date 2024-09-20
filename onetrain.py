@@ -3,17 +3,28 @@
 import os
 import argparse
 import tempfile
-from app.util import info, accelerator # pylint: disable=unused-import # noqa: F401
+from app.util import info, accelerator # pylint: disable=unused-import
 from app.config import get_config, init_config # pylint: disable=unused-import # noqa: F401
+from app.logger import log, init_logger
+from app.prepare import prepare
+from app.caption import caption
+from app.train import train
+from app.util import TrainArgs
 
 
-args = None
-if __name__ == '__main__':
+args = TrainArgs()
+
+
+def main():
+    info.status = 'init'
+    global args # pylint: disable=global-statement
     parser = argparse.ArgumentParser(description = 'onetrain')
     parser.add_argument('--concept', required=True, type=str, help='concept name')
     parser.add_argument('--input', required=True, type=str, help='folder with training dataset')
     parser.add_argument("--model", required=False, type=str, help='stable diffusion base model')
+    parser.add_argument('--format', default='.jpg', type=str, help='image format')
     parser.add_argument('--reference', required=False, type=str, help='reference image for similarity checks')
+    parser.add_argument("--noclean", default=False, action='store_true', help='clean output concept folder on start')
     parser.add_argument("--train", default=False, action='store_true', help='run training')
     parser.add_argument("--tag", default=False, action='store_true', help='add tagging info')
     parser.add_argument("--validate", default=False, action='store_true', help='run image validation')
@@ -42,13 +53,11 @@ if __name__ == '__main__':
     parser.add_argument("--debug", default=False, action='store_true', help='debug logging')
     parser.add_argument('--tmp', default=os.path.join(tempfile.gettempdir(), 'onetrain'), type=str, help='training temp folder')
     args = parser.parse_args()
-
     if not os.path.isabs(args.tmp):
         args.tmp = os.path.join(os.path.dirname(__file__), args.tmp)
     os.makedirs(args.tmp, exist_ok=True)
     log_file = args.log or os.path.join(args.tmp, 'onetrain.log')
 
-    from app.logger import log, init_logger
     init_logger(log_file)
     log.info('onetrain')
     log.info(f'log: {log_file}')
@@ -68,11 +77,26 @@ if __name__ == '__main__':
         log.error(f'model not found: {args.model}')
         exit(1)
     if os.path.exists(os.path.join(args.tmp, args.concept)):
-        log.warning(f'concept folder exists: {os.path.join(args.tmp, args.concept)}')
+        if args.noclean:
+            log.warning(f'concept folder exists: {os.path.join(args.tmp, args.concept)}')
+        else:
+            log.warning(f'cleaning concept folder: {os.path.join(args.tmp, args.concept)}')
+            removed = []
+            for f in os.listdir(os.path.join(args.tmp, args.concept)):
+                fn = os.path.join(args.tmp, args.concept, f)
+                if os.path.isfile(fn) or os.path.islink(fn):
+                    removed.append(fn)
+                    os.remove(os.path.join(args.tmp, args.concept, f))
+            log.debug(f'cleaning concept folder: removed={removed}')
+
+
+main()
+
+
+if __name__ == '__main__':
     try:
-        from app.caption import caption
+        prepare(args)
         caption(args)
-        from app.train import train
         train(args)
     except KeyboardInterrupt:
         log.error('interrupted')

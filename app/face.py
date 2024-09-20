@@ -10,7 +10,7 @@ def load():
     global model # pylint: disable=global-statement
     if model is None:
         name = 'yolov8n-face.pt'
-        log.info(f'validate: model="{name}"')
+        log.info(f'validate face: model="{name}"')
         from ultralytics import YOLO # pylint: disable=import-outside-toplevel
         model_url = os.path.join(os.path.dirname(__file__), '..', 'models', name)
         model = YOLO(model_url)

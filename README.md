@@ -102,17 +102,10 @@ Log if not specified will be stored in `SYSTEM_TEMP_FOLDER/onetrain/onetrain.log
 
 ```py
 import onetrain
-
-args = onetrain.TrainArgs() # create config object
-args.concept = 'alla'
-args.onetrain = '~/code/onetrainer'
-args.input = './dataset'
-args.model = './sdxl.safetensors'
-args.epochs = 200
-args.batch = 4
-
-onetrainer.caption(args) # start captioning
-onetrainer.train(args) # start training
+onetrain.args.epoch = 100
+onetrain.prepare(onetrain.args)
+onetrain.caption(onetrain.args)
+onetrain.train(onetrain.args)
 onetrainer.log(onetrain.info) # info object contains real-time information about training that can be monitored
 ```
 
@@ -121,15 +114,10 @@ or if you want to use it async so your app can do other things and monitor progr
 ```py
 import threading
 import onetrain
-
-args = onetrain.TrainArgs() # create config object
-args.concept = 'alla'
-args.onetrain = '~/code/onetrainer'
-args.input = './dataset'
-args.model = './sdxl.safetensors'
-args.nopbar = True
-
-thread = threading.Thread(target=onetrain.train, args=(args,))
+onetrain.args.epoch = 100
+onetrain.prepare(onetrain.args)
+onetrain.caption(onetrain.args)
+thread = threading.Thread(target=onetrain.train, args=(onetrain.args,))
 thread.start()
 while thread.is_alive():
     onetrain.log(onetrain.info)

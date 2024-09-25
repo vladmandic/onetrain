@@ -1,7 +1,7 @@
 import cv2
 from deepface import DeepFace
 from deepface.modules import verification
-from app.logger import log
+from .logger import log
 
 
 models = [ 'VGG-Face', 'Facenet512', 'ArcFace', 'DeepFace', 'Dlib', 'Facenet', 'SFace', 'OpenFace', 'DeepID', 'GhostFaceNet']

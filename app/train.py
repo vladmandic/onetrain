@@ -111,7 +111,7 @@ def train(args: TrainArgs):
     set_path(args)
     buckets(args)
 
-    from app.logger import pbar
+    from .logger import pbar
     from modules.util.callbacks.TrainCallbacks import TrainCallbacks # pylint: disable=import-error
     from modules.util.commands.TrainCommands import TrainCommands # pylint: disable=import-error
     from modules.trainer.GenericTrainer import GenericTrainer # pylint: disable=import-error

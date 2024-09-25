@@ -39,7 +39,7 @@ def blur(image):
 
 
 def detect(image):
-    import .face
+    from . import face
     face.load()
     faces, scores = face.detect(image, min_confidence=config.min_face_confidence / 4, max_detected=config.max_faces)
     if len(faces) == 0:
@@ -58,7 +58,7 @@ def detect(image):
 def similarity(reference, image):
     if reference is None:
         return
-    import .similarity
+    from . import similarity
     res = similarity.distance(reference, image)
     if res > config.max_distance:
         raise ValueError(f'face-similarity: {round(1 - res, 2)}')

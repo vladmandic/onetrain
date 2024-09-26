@@ -30,12 +30,17 @@ def init_logger(log_file: str = None):
         console=console,
         transient=False)
 
+    # log console handler
     log_handler_console = RichHandler(show_time=True, omit_repeated_times=False, show_level=True, show_path=False, markup=False, rich_tracebacks=True, log_time_format='%H:%M:%S-%f', level=logging.DEBUG, console=console)
     log_handler_console.setLevel(logging.DEBUG)
     log.addHandler(log_handler_console)
+
+    # log to file
     if log_file is not None:
         log_handler_file = logging.handlers.RotatingFileHandler(log_file, encoding='utf-8', delay=True)
         log_handler_file.formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(module)s | %(message)s')
         log_handler_file.setLevel(logging.DEBUG)
         log.addHandler(log_handler_file)
     log.setLevel(logging.INFO)
+
+

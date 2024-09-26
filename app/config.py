@@ -1,6 +1,6 @@
 import os
 import json
-from app.logger import log
+from .logger import log
 
 
 config = {}

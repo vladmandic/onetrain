@@ -3,14 +3,15 @@ import time
 import uuid
 import numpy as np
 from PIL import Image
-from app.util import TrainArgs, info
-from app.logger import log
-from app.validate import validate
-from app.config import get_config
+from .util import TrainArgs, info
+from .logger import log
+from .validate import validate
+from .config import get_config
 
 
 def prepare(args: TrainArgs):
     info.status = 'prepare'
+    info.concept = args.concept
     from pi_heif import register_heif_opener
     register_heif_opener()
     folder = os.path.join(args.tmp, args.concept)
@@ -69,11 +70,12 @@ def prepare(args: TrainArgs):
         log.error(f'images: {e}')
     args.input = folder
     t1 = time.time()
-    info.validate = {
+    info.validation = {
         'passed': passed,
         'failed': failed,
         'captions': captions,
         'skipped': skipped,
         'convert': convert,
     }
+    info.status = "validated"
     log.info(f'validate: pass={len(passed)} fail={len(failed)} captions={len(captions)} skip={len(skipped)} time={t1-t0:.2f}')

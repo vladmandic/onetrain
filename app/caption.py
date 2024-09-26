@@ -1,9 +1,9 @@
 import os
 import time
 import contextlib
-from app.util import TrainArgs, set_path, info, accelerator
-from app.logger import log
-from app.config import get_config
+from .util import TrainArgs, set_path, info, accelerator
+from .logger import log
+from .config import get_config
 
 
 all_tags = []
@@ -12,7 +12,7 @@ all_tags = []
 def caption_onetrainer(args: TrainArgs, tagger: str = ''):
     set_path(args)
     import torch
-    from app.logger import pbar
+    from .logger import pbar
 
     def caption_progress_callback(current, total):
         if not args.nopbar:
@@ -66,7 +66,7 @@ def caption_onetrainer(args: TrainArgs, tagger: str = ''):
 
 def caption_wdtagger(args: TrainArgs):
     from transformers import pipeline
-    from app.logger import pbar
+    from .logger import pbar
     folder = os.path.join(args.tmp, args.concept)
     model = "p1atdev/wd-swinv2-tagger-v3-hf"
     log.info(f'caption: model="{model}" path="{folder}"')
@@ -106,7 +106,7 @@ def caption_wdtagger(args: TrainArgs):
 def caption_promptgen(args):
     import cv2
     import transformers
-    from app.logger import pbar
+    from .logger import pbar
 
     folder = os.path.join(args.tmp, args.concept)
     repo = "MiaoshouAI/Florence-2-base-PromptGen-v1.5"

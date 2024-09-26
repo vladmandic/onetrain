@@ -4,10 +4,10 @@ import json
 import contextlib
 import datetime
 import cv2
-from app.logger import log
-from app.util import TrainArgs, set_path, clean_dict, info
-from app.config import get_config
-from app.caption import tags
+from .logger import log
+from .util import TrainArgs, set_path, clean_dict, info
+from .config import get_config
+from .caption import tags
 
 
 def set_config(args: TrainArgs):
@@ -111,7 +111,7 @@ def train(args: TrainArgs):
     set_path(args)
     buckets(args)
 
-    from app.logger import pbar
+    from .logger import pbar
     from modules.util.callbacks.TrainCallbacks import TrainCallbacks # pylint: disable=import-error
     from modules.util.commands.TrainCommands import TrainCommands # pylint: disable=import-error
     from modules.trainer.GenericTrainer import GenericTrainer # pylint: disable=import-error

@@ -3,8 +3,8 @@
 import os
 import cv2
 import torch
-from app.util import TrainArgs, Obj
-from app.config import get_config
+from .util import TrainArgs, Obj
+from .config import get_config
 
 
 config = None
@@ -39,9 +39,9 @@ def blur(image):
 
 
 def detect(image):
-    import app.face
-    app.face.load()
-    faces, scores = app.face.detect(image, min_confidence=config.min_face_confidence / 4, max_detected=config.max_faces)
+    from . import face
+    face.load()
+    faces, scores = face.detect(image, min_confidence=config.min_face_confidence / 4, max_detected=config.max_faces)
     if len(faces) == 0:
         raise ValueError('face-detected: none')
     if max(scores) < config.min_face_confidence:
@@ -58,8 +58,8 @@ def detect(image):
 def similarity(reference, image):
     if reference is None:
         return
-    import app.similarity
-    res = app.similarity.distance(reference, image)
+    from . import similarity
+    res = similarity.distance(reference, image)
     if res > config.max_distance:
         raise ValueError(f'face-similarity: {round(1 - res, 2)}')
 

@@ -19,8 +19,8 @@ def main():
     info.status = 'init'
     global args # pylint: disable=global-statement
     parser = argparse.ArgumentParser(description = 'onetrain')
-    parser.add_argument('--concept', required=True, type=str, help='concept name')
-    parser.add_argument('--input', required=True, type=str, help='folder with training dataset')
+    parser.add_argument('--concept', required=False, type=str, help='concept name')
+    parser.add_argument('--input', required=False, type=str, help='folder with training dataset')
     parser.add_argument("--model", required=False, type=str, help='stable diffusion base model')
     parser.add_argument('--format', default='.jpg', type=str, help='image format')
     parser.add_argument('--reference', required=False, type=str, help='reference image for similarity checks')
@@ -52,7 +52,7 @@ def main():
     parser.add_argument("--nopbar", default=False, action='store_true', help='disable progress bar')
     parser.add_argument("--debug", default=False, action='store_true', help='debug logging')
     parser.add_argument('--tmp', default=os.path.join(tempfile.gettempdir(), 'onetrain'), type=str, help='training temp folder')
-    args = parser.parse_args()
+    args, _unknown = parser.parse_known_args()
     if not os.path.isabs(args.tmp):
         args.tmp = os.path.join(os.path.dirname(__file__), args.tmp)
     os.makedirs(args.tmp, exist_ok=True)
@@ -67,6 +67,12 @@ def main():
         log.debug('debug logging enabled')
     log.info(f'args: {args}')
     log.info(f'device: {accelerator.device}')
+
+
+main()
+
+
+if __name__ == '__main__':
     if not (os.path.exists(args.input) and os.path.isdir(args.input)):
         log.error(f'input folder not found: {args.input}')
         exit(1)
@@ -88,12 +94,12 @@ def main():
                     removed.append(fn)
                     os.remove(os.path.join(args.tmp, args.concept, f))
             log.debug(f'cleaning concept folder: removed={removed}')
-
-
-main()
-
-
-if __name__ == '__main__':
+    if args.concept is None:
+        log.error('concept name not provided')
+        exit(1)
+    if args.input is None:
+        log.error('input folder not provided')
+        exit(1)
     try:
         prepare(args)
         caption(args)

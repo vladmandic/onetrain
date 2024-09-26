@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
+export UV_INDEX_STRATEGY=unsafe-any-match
 python -m venv venv
 source venv/bin/activate
 pip install uv
-uv pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu124
 uv pip install --requirement requirements.txt
-uv pip install --upgrade --no-deps xformers torchvision
+uv pip install --upgrade --no-deps xformers
 pip install -e git+https://github.com/Nerogar/mgds.git#egg=mgds

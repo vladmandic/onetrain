@@ -10,7 +10,7 @@ from .config import get_config
 config = None
 
 
-def dynamicrange(image, epsilon=1e-10):
+def check_dynamicrange(image, epsilon=1e-10):
     tensor = torch.from_numpy(image)
     I_min = torch.min(tensor)
     I_max = torch.max(tensor)
@@ -21,7 +21,7 @@ def dynamicrange(image, epsilon=1e-10):
         raise ValueError(f'face-range: {dynamic_range_db}')
 
 
-def size(img):
+def check_size(img):
     h, w, _c = img.shape
     if h * w < config.min_size:
         raise ValueError(f'image-size: {w*h}')
@@ -30,7 +30,7 @@ def size(img):
     if w < config.min_width:
         raise ValueError(f'image-width: {w}')
 
-def blur(image):
+def check_blur(image):
     bw = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     variance = 1 / cv2.Laplacian(bw, cv2.CV_64F).var()
     variance = round(variance, 2)
@@ -38,10 +38,10 @@ def blur(image):
         raise ValueError(f'face-blur: {variance}')
 
 
-def detect(image):
-    from . import face
-    face.load()
-    faces, scores = face.detect(image, min_confidence=config.min_face_confidence / 4, max_detected=config.max_faces)
+def detect_face(image):
+    from .face import load, detect
+    load()
+    faces, scores = detect(image, min_confidence=config.min_face_confidence / 4, max_detected=config.max_faces)
     if len(faces) == 0:
         raise ValueError('face-detected: none')
     if max(scores) < config.min_face_confidence:
@@ -55,11 +55,11 @@ def detect(image):
     return face
 
 
-def similarity(reference, image):
+def check_similarity(reference, image):
     if reference is None:
         return
-    from . import similarity
-    res = similarity.distance(reference, image)
+    from .similarity import distance
+    res = distance(reference, image)
     if res > config.max_distance:
         raise ValueError(f'face-similarity: {round(1 - res, 2)}')
 
@@ -77,11 +77,11 @@ def validate(f, image, args: TrainArgs):
             raise ValueError('empty')
         if not args.validate:
             return None
-        size(image)
-        face = detect(image)
-        blur(face)
-        dynamicrange(face)
-        similarity(args.reference, image)
+        check_size(image)
+        face = detect_face(image)
+        check_blur(face)
+        check_dynamicrange(face)
+        check_similarity(args.reference, image)
     except Exception as e:
         # from app.logger import console
         # console.print_exception(max_frames=20)

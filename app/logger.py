@@ -42,5 +42,3 @@ def init_logger(log_file: str = None):
         log_handler_file.setLevel(logging.DEBUG)
         log.addHandler(log_handler_file)
     log.setLevel(logging.INFO)
-
-

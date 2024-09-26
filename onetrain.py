@@ -1,16 +1,21 @@
 #!/usr/bin/env python
-
 import os
+import sys
 import argparse
 import tempfile
-from app.util import info, accelerator # pylint: disable=unused-import
-from app.config import get_config, init_config # pylint: disable=unused-import # noqa: F401
-from app.logger import log, init_logger
-from app.prepare import prepare
-from app.caption import caption
-from app.train import train
-from app.util import TrainArgs
 
+# hack to allow cli usage of onetrain
+__package__ = os.path.basename(os.path.dirname(__file__)) # pylint: disable=redefined-builtin
+parent = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, parent)
+
+from .app.util import info, accelerator # pylint: disable=unused-import
+from .app.config import get_config, init_config # pylint: disable=unused-import # noqa: F401
+from .app.logger import log, init_logger
+from .app.prepare import prepare
+from .app.caption import caption
+from .app.train import train
+from .app.util import TrainArgs
 
 args = TrainArgs()
 
@@ -54,6 +59,9 @@ def main():
     parser.add_argument('--tmp', default=os.path.join(tempfile.gettempdir(), 'onetrain'), type=str, help='training temp folder')
     args, _unknown = parser.parse_known_args()
 
+    if not os.path.isabs(args.tmp):
+        args.tmp = os.path.join(os.path.dirname(__file__), args.tmp)
+    os.makedirs(args.tmp, exist_ok=True)
     log_file = args.log or os.path.join(args.tmp, 'onetrain.log')
     init_logger(log_file)
     log.info('onetrain')
@@ -97,9 +105,6 @@ if __name__ == '__main__':
     if args.debug:
         log.setLevel('DEBUG')
         log.debug('debug logging enabled')
-    if not os.path.isabs(args.tmp):
-        args.tmp = os.path.join(os.path.dirname(__file__), args.tmp)
-    os.makedirs(args.tmp, exist_ok=True)
     try:
         prepare(args)
         caption(args)

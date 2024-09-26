@@ -10,7 +10,6 @@ customtkinter
 dadaptation
 diffusers
 einops
-flash_attn
 huggingface-hub
 invisible-watermark
 keras

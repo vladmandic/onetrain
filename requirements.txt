@@ -1,4 +1,9 @@
 --extra-index-url https://download.pytorch.org/whl/cu124
+setuptools==69.5.1
+pydantic==1.10.15
+torch==2.4.1+cu124
+torchvision==0.19.1+cu124
+deepface=0.0.93
 accelerate
 bitsandbytes
 customtkinter
@@ -22,6 +27,7 @@ prodigyopt
 pytorch_optimizer
 pytorch-lightning
 PyYAML
+rich
 ruff
 safetensors
 scalene

@@ -55,6 +55,7 @@ def set_config(args: TrainArgs):
     if args.save:
         config['save_after'] = int(config['epochs'] / args.save)
         config['save_after_unit'] = 'EPOCH'
+    os.makedirs(args.tmp, exist_ok=True)
     config['debug_dir'] = os.path.join(args.tmp, 'debug')
     config['workspace_dir'] = os.path.join(args.tmp, 'workspace')
     config['cache_dir'] = os.path.join(args.tmp, 'cache')

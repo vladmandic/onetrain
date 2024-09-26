@@ -156,6 +156,7 @@ def caption(args: TrainArgs):
     all_tags.clear()
     captioners = get_config('caption') if args.caption else []
     folder = os.path.join(args.tmp, args.concept)
+    os.makedirs(args.tmp, exist_ok=True)
     log.info(f'caption: config={captioners}')
 
     t0 = time.time()

@@ -53,18 +53,12 @@ def main():
     parser.add_argument("--debug", default=False, action='store_true', help='debug logging')
     parser.add_argument('--tmp', default=os.path.join(tempfile.gettempdir(), 'onetrain'), type=str, help='training temp folder')
     args, _unknown = parser.parse_known_args()
-    if not os.path.isabs(args.tmp):
-        args.tmp = os.path.join(os.path.dirname(__file__), args.tmp)
-    os.makedirs(args.tmp, exist_ok=True)
-    log_file = args.log or os.path.join(args.tmp, 'onetrain.log')
 
+    log_file = args.log or os.path.join(args.tmp, 'onetrain.log')
     init_logger(log_file)
     log.info('onetrain')
     log.info(f'log: {log_file}')
     init_config(args)
-    if args.debug:
-        log.setLevel('DEBUG')
-        log.debug('debug logging enabled')
     log.info(f'args: {args}')
     log.info(f'device: {accelerator.device}')
 
@@ -100,6 +94,12 @@ if __name__ == '__main__':
     if args.input is None:
         log.error('input folder not provided')
         exit(1)
+    if args.debug:
+        log.setLevel('DEBUG')
+        log.debug('debug logging enabled')
+    if not os.path.isabs(args.tmp):
+        args.tmp = os.path.join(os.path.dirname(__file__), args.tmp)
+    os.makedirs(args.tmp, exist_ok=True)
     try:
         prepare(args)
         caption(args)

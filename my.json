@@ -1,7 +1,8 @@
 {
   "caption": [
     "clear",
-    "concept"
+    "concept",
+    "promptgen"
   ],
   "validate": {
     "min_size": 500000,

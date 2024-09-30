@@ -4,11 +4,12 @@ pydantic==1.10.15
 torch==2.4.1+cu124
 torchvision==0.19.1+cu124
 deepface==0.0.93
+transformers==4.43.4
+diffusers==0.30.3
 accelerate
 bitsandbytes
 customtkinter
 dadaptation
-diffusers
 einops
 huggingface-hub
 invisible-watermark
@@ -38,6 +39,5 @@ tf-keras
 torch
 torchvision
 tqdm
-transformers
 ultralytics
 pi_heif

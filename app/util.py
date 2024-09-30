@@ -85,3 +85,15 @@ def clean_dict(d: TrainArgs):
         return [clean_dict(v) for v in d if maybe_none(v) and clean_dict(v)]
     else:
         return d
+
+
+def free():
+    import gc
+    import torch
+    from .logger import log
+    gc.collect()
+    with torch.cuda.device(accelerator.device):
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+    avail, total = torch.cuda.mem_get_info()
+    log.debug(f'cuda memory: avail={avail / 1024 / 1024 / 1024:.3f} total={total / 1024 / 1024 / 1024:.3f}')

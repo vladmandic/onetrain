@@ -4,8 +4,9 @@ import json
 import contextlib
 import datetime
 import cv2
+import torch
 from .logger import log
-from .util import TrainArgs, set_path, clean_dict, info
+from .util import TrainArgs, set_path, clean_dict, info, free
 from .config import get_config
 from .caption import tags
 
@@ -107,6 +108,7 @@ def buckets(args: TrainArgs):
 def train(args: TrainArgs):
     if not args.train:
         return
+    free()
 
     info.status = 'start'
     set_path(args)
@@ -127,8 +129,11 @@ def train(args: TrainArgs):
         info.update = time.time()
         info.status = 'train'
         its = p.global_step / (ts - info.start)
+        mem = torch.cuda.mem_get_info()
+        mem = f'{1-mem[0]/mem[1]:.2f}'
+
         if not args.nopbar:
-            pbar.update(task, completed=info.complete, description="train", text=f'step: {p.global_step} epoch: {p.epoch+1}/{max_epoch} batch: {p.epoch_step} samples: {max_sample} its: {its:.2f}')
+            pbar.update(task, completed=info.complete, description="train", text=f'step: {p.global_step} epoch: {p.epoch+1}/{max_epoch} batch: {p.epoch_step} samples: {max_sample} its: {its:.2f} memory: {mem}')
 
     def log_update(s: str):
         if 'loading' in s:
@@ -174,6 +179,7 @@ def train(args: TrainArgs):
         info.metadata = trainer.model.model_spec
         log.debug(f'metadata: {json.dumps(trainer.model.model_spec.__dict__, indent=2)}')
         log.info(f'settings: optimizer={config.optimizer.optimizer} scheduler={config.learning_rate_scheduler} rank={config.lora_rank} alpha={config.lora_alpha} batch={config.batch_size} accumulation={config.gradient_accumulation_steps} epochs={config.epochs}')
+        free()
         log.info('train: start')
         with pbar if not args.nopbar else contextlib.nullcontext():
             time.sleep(1)

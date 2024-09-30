@@ -58,7 +58,8 @@ def detect_face(image):
 def check_similarity(reference, image):
     if reference is None:
         return
-    from .similarity import distance
+    from .similarity import distance, init
+    init()
     res = distance(reference, image)
     if res > config.max_distance:
         raise ValueError(f'face-similarity: {round(1 - res, 2)}')

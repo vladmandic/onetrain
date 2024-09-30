@@ -15,7 +15,7 @@ from .app.logger import log, init_logger
 from .app.prepare import prepare
 from .app.caption import caption
 from .app.train import train
-from .app.util import TrainArgs
+from .app.util import TrainArgs, free
 
 args = TrainArgs()
 
@@ -64,11 +64,13 @@ def main():
     os.makedirs(args.tmp, exist_ok=True)
     log_file = args.log or os.path.join(args.tmp, 'onetrain.log')
     init_logger(log_file)
+    # os.environ.setdefault('PYTORCH_CUDA_ALLOC_CONF', 'garbage_collection_threshold:0.25,max_split_size_mb:512')
     log.info('onetrain')
     log.info(f'log: {log_file}')
     init_config(args)
     log.info(f'args: {args}')
     log.info(f'device: {accelerator.device}')
+    free()
 
 
 main()

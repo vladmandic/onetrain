@@ -1,6 +1,6 @@
 import os
 from .logger import log
-from .util import accelerator
+from .util import accelerator, free
 
 
 model = None
@@ -13,15 +13,16 @@ def load():
         log.info(f'validate face: model="{name}"')
         from ultralytics import YOLO # pylint: disable=import-outside-toplevel
         model_url = os.path.join(os.path.dirname(__file__), '..', 'models', name)
-        model = YOLO(model_url)
+        model = YOLO(model_url, verbose=True)
         model = model.to(accelerator.device)
 
 
 def unload():
     global model # pylint: disable=global-statement
     if model is not None:
+        model = model.to(device='cpu')
         model = None
-
+        free()
 
 def detect(image, imgsz: int = 640, half: bool = True, augment: bool = True, agnostic: bool = False, retina: bool = False, min_confidence: float = 0.6, iou: float = 0.5, max_detected: int = 10):
     predictions = model.predict(

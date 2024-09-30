@@ -3,13 +3,14 @@ import time
 import uuid
 import numpy as np
 from PIL import Image
-from .util import TrainArgs, info
+from .util import TrainArgs, info, free
 from .logger import log
 from .validate import validate
 from .config import get_config
 
 
 def prepare(args: TrainArgs):
+    free()
     info.status = 'prepare'
     info.concept = args.concept
     from pi_heif import register_heif_opener
@@ -77,5 +78,9 @@ def prepare(args: TrainArgs):
         'skipped': skipped,
         'convert': convert,
     }
+    from .face import unload as face_unload
+    face_unload()
+    from .similarity import unload as similarity_unload
+    similarity_unload()
     info.status = "validated"
     log.info(f'validate: pass={len(passed)} fail={len(failed)} captions={len(captions)} skip={len(skipped)} time={t1-t0:.2f}')

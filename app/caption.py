@@ -3,7 +3,7 @@ import time
 import contextlib
 import cv2
 import torch
-from .util import TrainArgs, set_path, info, accelerator
+from .util import TrainArgs, set_path, info, accelerator, free
 from .logger import log
 from .config import get_config
 
@@ -144,6 +144,7 @@ def caption_wdtagger(args: TrainArgs):
         pbar.remove_task(task)
 
     model = None
+    processor = None
 
 
 def caption_florence(args, repo):
@@ -199,6 +200,7 @@ def caption_florence(args, repo):
 
 def caption(args: TrainArgs):
     info.status = 'caption'
+    free()
     all_tags.clear()
     captioners = get_config('caption') if args.caption else []
     folder = os.path.join(args.tmp, args.concept)

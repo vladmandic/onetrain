@@ -16,6 +16,7 @@ _normalize = 'VGGFace2' # alternative: ArcFace
 _metric = 'cosine'
 reference_file = None
 reference = None
+initialized = False
 
 
 def face(img, detector: str = None, model: str = None, normalize: str = None, actions: list = None):
@@ -66,6 +67,25 @@ def distance(source, target):
         raise ValueError('face-target: none')
     res = verification.find_distance(reference["embedding"], target["embedding"], distance_metric=_metric)
     return round(res, 2)
+
+
+def init():
+    global initialized # pylint: disable=global-statement
+    if not initialized:
+        import tensorflow as tf
+        physical_devices = tf.config.list_physical_devices('GPU')
+        tf.config.set_visible_devices(physical_devices[1:], 'GPU')
+        logical_devices = tf.config.list_logical_devices('GPU')
+        log.info(f'TF: physical={physical_devices} logical={logical_devices}')
+        initialized = True
+
+
+def unload():
+    from deepface.modules import modeling
+    if hasattr(modeling, 'cached_models'):
+        for k in list(modeling.cached_models):
+            modeling.cached_models[k] = None
+    del modeling.cached_models
 
 
 """

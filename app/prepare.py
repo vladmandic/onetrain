@@ -40,6 +40,8 @@ def prepare(args: TrainArgs):
             else:
                 try:
                     image = Image.open(f)
+                    w, h = 8 * (image.width // 8), 8 * (image.height // 8)
+                    image = image.resize((w, h), Image.Resampling.LANCZOS)
                     if image.mode != 'RGB':
                         converted = { os.path.basename(f): str(image.mode) }
                         log.debug(f'validate convert: {converted}')
@@ -59,7 +61,6 @@ def prepare(args: TrainArgs):
                     log.debug(f'validate failed: {status}')
                     failed.append(status)
                     continue
-            # shutil.copy(f, tgt)
             image = Image.fromarray(image)
             tgt = os.path.join(folder, str(uuid.uuid4())) + args.format
             image.save(tgt)

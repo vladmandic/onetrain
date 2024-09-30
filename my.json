@@ -6,9 +6,9 @@
     "cog"
   ],
   "validate": {
-    "min_size": 500000,
-    "min_width": 500,
-    "min_height": 500,
+    "min_size": 750000,
+    "min_width": 512,
+    "min_height": 512,
 
     "max_faces": 1,
     "max_blur": 0.1,
@@ -20,14 +20,13 @@
   "train": {
     "log": "tmp/onetrain.log",
     "author": "vlado",
-    "batch": 1,
-    "epochs": 10,
+    "batch": 4,
+    "epochs": 100,
     "rank": 16,
     "validate": true,
     "caption": true,
     "tag": true,
     "train": true,
-    "reference": "/home/vlado/generative/Input/_test/night.jpg",
     "debug": true
   }
 }

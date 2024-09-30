@@ -2,7 +2,8 @@
   "caption": [
     "clear",
     "concept",
-    "promptgen"
+    "wdtagger",
+    "cog"
   ],
   "validate": {
     "min_size": 500000,
@@ -18,7 +19,6 @@
   },
   "train": {
     "log": "tmp/onetrain.log",
-    "type": "sdxl",
     "author": "vlado",
     "batch": 1,
     "epochs": 10,

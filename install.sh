@@ -5,4 +5,5 @@ source venv/bin/activate
 pip install uv
 uv pip install --requirement requirements.txt
 uv pip install --upgrade --no-deps xformers
+uv pip install flash_attn --no-build-isolation
 pip install -e git+https://github.com/Nerogar/mgds.git#egg=mgds

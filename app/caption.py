@@ -1,6 +1,8 @@
 import os
 import time
 import contextlib
+import cv2
+import torch
 from .util import TrainArgs, set_path, info, accelerator
 from .logger import log
 from .config import get_config
@@ -11,7 +13,6 @@ all_tags = []
 
 def caption_onetrainer(args: TrainArgs, tagger: str = ''):
     set_path(args)
-    import torch
     from .logger import pbar
 
     def caption_progress_callback(current, total):
@@ -64,6 +65,7 @@ def caption_onetrainer(args: TrainArgs, tagger: str = ''):
     model = None
 
 
+"""
 def caption_wdtagger(args: TrainArgs):
     from transformers import pipeline
     from .logger import pbar
@@ -73,6 +75,7 @@ def caption_wdtagger(args: TrainArgs):
     pipe = pipeline(
         "image-classification",
         model=model,
+        top_k=15,
         trust_remote_code=True,
         device=accelerator.device,
     )
@@ -85,6 +88,7 @@ def caption_wdtagger(args: TrainArgs):
             file = os.path.join(folder, f)
             items = pipe(file, top_k=15)
             words = []
+            # log.debug(f'caption: "{f}"={items}')
             for item in items:
                 k, v = item['label'], item['score']
                 if 'rating:sensitive' in k or v > 0.05:
@@ -101,43 +105,85 @@ def caption_wdtagger(args: TrainArgs):
         pbar.remove_task(task)
 
     model = None
+"""
 
 
-def caption_promptgen(args):
-    import cv2
+def caption_wdtagger(args: TrainArgs):
     import transformers
     from .logger import pbar
-
+    threshold = get_config('tag')
     folder = os.path.join(args.tmp, args.concept)
-    repo = "MiaoshouAI/Florence-2-base-PromptGen-v1.5"
-    log.info(f'caption: model="{repo}" path="{folder}"')
-
-    model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True)
-    model = model.to(accelerator.device)
-    processor = transformers.AutoProcessor.from_pretrained("MiaoshouAI/Florence-2-base-PromptGen-v1.5", trust_remote_code=True)
-    prompt = "<MORE_DETAILED_CAPTION>"
-
+    repo = "p1atdev/wd-swinv2-tagger-v3-hf"
+    log.info(f'caption: model="{repo}" path="{folder}" threshold={threshold}')
+    model = transformers.AutoModelForImageClassification.from_pretrained(repo, trust_remote_code=True)
+    processor = transformers.AutoImageProcessor.from_pretrained(repo, trust_remote_code=True)
     files = os.listdir(folder)
-    files = [f for f in files if os.path.splitext(f)[1].lower() == args.format]
+    files = [f for f in files if os.path.splitext(f)[1].lower() in ['.jpg', '.jpeg', '.png', '.webp']]
     if not args.nopbar:
-        task = pbar.add_task(description="caption promptgen", text="", total=len(files))
+        task = pbar.add_task(description="caption wdtagger", text="", total=len(files))
     with pbar if not args.nopbar else contextlib.nullcontext():
         for i, f in enumerate(files):
             file = os.path.join(folder, f)
             image = cv2.imread(file)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            inputs = processor(text=prompt, images=image, return_tensors="pt").to(accelerator.device)
+            inputs = processor.preprocess(image, return_tensors="pt")
+            with torch.no_grad():
+                outputs = model(**inputs.to(model.device, model.dtype))
+            logits = torch.sigmoid(outputs.logits[0]) # take the first logits
+            results = { model.config.id2label[i]: logit.float() for i, logit in enumerate(logits) }
+            results = { k: v.item() for k, v in sorted(results.items(), key=lambda item: item[1], reverse=True) if v > threshold }
+            words = list(results)
+            # log.debug(f'caption: "{f}"={words}')
+            tag = os.path.splitext(file)[0] + '.txt'
+            with open(tag, 'a', encoding='utf8') as f:
+                txt = ', '.join(words).replace('rating:', '')
+                f.write(f'{txt}, ')
+            if not args.nopbar:
+                pbar.update(task, completed=i+1, text=f'{i+1}/{len(files)} images')
+    if not args.nopbar:
+        pbar.remove_task(task)
+
+    model = None
+
+
+def caption_florence(args, repo):
+    import transformers
+    from .logger import pbar
+
+    folder = os.path.join(args.tmp, args.concept)
+    log.info(f'caption: model="{repo}" path="{folder}"')
+
+    try:
+        model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True)
+        model = model.to(accelerator.device)
+        processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True)
+    except Exception as e:
+        log.error(f'caption: model="{repo}" error={e}')
+        return
+    task_prompt = "<MORE_DETAILED_CAPTION>"
+
+    files = os.listdir(folder)
+    files = [f for f in files if os.path.splitext(f)[1].lower() == args.format]
+    if not args.nopbar:
+        task = pbar.add_task(description="caption florence", text="", total=len(files))
+    with pbar if not args.nopbar else contextlib.nullcontext():
+        for i, f in enumerate(files):
+            file = os.path.join(folder, f)
+            image = cv2.imread(file)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            inputs = processor(text=task_prompt, images=image, return_tensors="pt").to(accelerator.device)
             generated_ids = model.generate(
                 input_ids=inputs["input_ids"],
                 pixel_values=inputs["pixel_values"],
-                max_new_tokens=256,
-                do_sample=False,
+                max_new_tokens=1024,
+                do_sample=True,
                 num_beams=3
             )
             generated = processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
-            parsed = processor.post_process_generation(generated, task=prompt, image_size=(image.shape[0], image.shape[1]))
-            prompt = parsed.get(prompt, '')
-            prompt = prompt.split('\n')[0].replace('\\(', '').replace('\\)', '').strip()
+            parsed = processor.post_process_generation(generated, task=task_prompt, image_size=(image.shape[0], image.shape[1]))
+            generated_ids, generated, image = None, None, None
+            prompt = parsed.get(task_prompt, '')
+            prompt = prompt.split('\n')[0].replace('\\(', '').replace('\\)', '').replace(' a ', ' ').replace('A ', '').replace('The ', '').replace('  ', ' ').strip()
             # log.debug(f'caption: "{f}"={prompt}')
             tag = os.path.splitext(file)[0] + '.txt'
             with open(tag, 'a', encoding='utf8') as f:
@@ -176,7 +222,11 @@ def caption(args: TrainArgs):
         if captioner == 'wdtagger':
             caption_wdtagger(args)
         if captioner == 'promptgen':
-            caption_promptgen(args)
+            caption_florence(args, "MiaoshouAI/Florence-2-base-PromptGen-v1.5")
+        if captioner == 'florence':
+            caption_florence(args, "microsoft/Florence-2-base")
+        if captioner == 'cog':
+            caption_florence(args, "thwri/CogFlorence-2.2-Large")
         if captioner == 'blip':
             caption_onetrainer(args, 'blip')
         if captioner == 'wd14':

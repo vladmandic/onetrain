@@ -12,6 +12,7 @@ class Obj:
 
 # info class that can be accessed externally
 info = types.SimpleNamespace(
+    id = '',
     concept = '',
     busy = False,
     complete = 0,
@@ -33,6 +34,7 @@ info = types.SimpleNamespace(
 
 # args inf using functions directly
 class TrainArgs():
+    id: str
     concept: str
     input: str
     model: str

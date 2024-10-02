@@ -3,12 +3,13 @@ import time
 import json
 import contextlib
 import datetime
+import random
 import cv2
 import torch
-from .logger import log
+from .logger import log, console
 from .util import TrainArgs, set_path, clean_dict, info, free
 from .config import get_config
-from .caption import tags
+from .caption import tags, prompt
 
 
 def set_config(args: TrainArgs):
@@ -56,6 +57,9 @@ def set_config(args: TrainArgs):
     if args.save:
         config['save_after'] = int(config['epochs'] / args.save)
         config['save_after_unit'] = 'EPOCH'
+    if args.sample:
+        config['sample_after'] = 10
+        config['sample_after_unit'] = 'EPOCH'
     os.makedirs(args.tmp, exist_ok=True)
     config['debug_dir'] = os.path.join(args.tmp, 'debug')
     config['workspace_dir'] = os.path.join(args.tmp, 'workspace')
@@ -84,6 +88,13 @@ def set_config(args: TrainArgs):
 
     with open(train_config.sample_definition_file_name, "w", encoding='utf-8') as f:
         samples = get_config('samples')
+        seed = int(random.randrange(4294967294))
+        for i, _s in enumerate(samples):
+            if args.sample:
+                samples[i]["enabled"] = True
+                samples[i]["prompt"] = prompt()
+                samples[i]["seed"] = seed
+                log.info(f'samples prompt: "{prompt()}"')
         log.info(f'write samples: file="{train_config.sample_definition_file_name}"')
         json.dump(samples, f, indent=2)
 
@@ -122,23 +133,27 @@ def train(args: TrainArgs):
     def train_progress_callback(p, max_sample, max_epoch):
         ts = time.time()
         info.progress = p
-        total = max_sample * max_epoch
-        info.complete = int(100 * p.global_step / total)
+        info.total = max_sample * max_epoch
+        info.complete = int(100 * p.global_step / info.total)
         info.epoch = p.epoch
         info.step = p.global_step
         info.update = time.time()
         info.status = 'train'
-        its = p.global_step / (ts - info.start)
+        info.its = p.global_step / (ts - info.start)
         mem = torch.cuda.mem_get_info()
-        mem = f'{1-mem[0]/mem[1]:.2f}'
+        info.mem = f'{1-mem[0]/mem[1]:.0f}'
 
         if not args.nopbar:
-            pbar.update(task, completed=info.complete, description="train", text=f'step: {p.global_step} epoch: {p.epoch+1}/{max_epoch} batch: {p.epoch_step} samples: {max_sample} its: {its:.2f} memory: {mem}')
+            pbar.update(task, completed=info.step, total=info.total, description="train", text=f'step: {info.step} epoch: {info.epoch+1}/{max_epoch} batch: {p.epoch_step} samples: {max_sample} its: {info.its:.2f} memory: {info.mem}')
 
     def log_update(s: str):
         if 'loading' in s:
             info.status = 'loading'
-        if s not in ['training', 'starting epoch/caching']:
+        if s in 'sampling':
+            info.status = 'sample'
+            if not args.nopbar:
+                pbar.update(task, completed=info.step, total=info.total, description="train", text=f'step: {info.step} epoch: {info.epoch+1} generating sample')
+        elif s not in ['training', 'starting epoch/caching']:
             log.info(f'update: {s}')
 
     info.busy = True
@@ -181,13 +196,15 @@ def train(args: TrainArgs):
         log.debug(f'metadata: {json.dumps(trainer.model.model_spec.__dict__, indent=2)}')
         log.info(f'settings: optimizer={config.optimizer.optimizer} scheduler={config.learning_rate_scheduler} rank={config.lora_rank} alpha={config.lora_alpha} batch={config.batch_size} accumulation={config.gradient_accumulation_steps} epochs={config.epochs}')
         free()
+        log.info(f'lora: peft={trainer.model.unet_lora.peft_type} class={trainer.model.unet_lora.klass} train={trainer.model.train_dtype}')
         log.info('train: start')
         with pbar if not args.nopbar else contextlib.nullcontext():
-            time.sleep(1)
+            time.sleep(0.1)
             trainer.train()
         trainer.end()
     except Exception as e:
         log.error(f'train: error={e}')
+        console.print_exception()
 
     if not args.nopbar:
         pbar.remove_task(task)

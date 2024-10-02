@@ -8,6 +8,7 @@ from .config import get_config
 
 
 config = None
+disable = []
 
 
 def check_dynamicrange(image, epsilon=1e-10):
@@ -56,11 +57,13 @@ def detect_face(image):
 
 
 def check_similarity(reference, image):
-    if reference is None:
+    if reference is None or config.max_distance <= 0 or 'similarity' in disable:
         return
     from .similarity import distance, init
     init()
     res = distance(reference, image)
+    if res < 0:
+        disable.append('similarity')
     if res > config.max_distance:
         raise ValueError(f'face-similarity: {round(1 - res, 2)}')
 

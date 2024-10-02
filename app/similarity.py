@@ -56,6 +56,9 @@ def distance(source, target):
     if reference_file != source:
         reference_file = source
         reference_image = cv2.imread(source) if isinstance(source, str) else source
+        if reference_image is None:
+            log.warning('face-reference: none')
+            return -1
         reference = face(reference_image, detector=_detector, model=_model, normalize=_normalize, actions=_actions)
         log.info(f'validate similarity: model="{_model}" detector="{_detector}" normalization="{_normalize}" actions={_actions} metric="{_metric}"')
         log.info(f'validate reference: file="{source}" shape={reference_image.shape} data={len(reference["embedding"])} confidence={reference["face_confidence"]}')
@@ -85,7 +88,7 @@ def unload():
     if hasattr(modeling, 'cached_models'):
         for k in list(modeling.cached_models):
             modeling.cached_models[k] = None
-    del modeling.cached_models
+        del modeling.cached_models
 
 
 """

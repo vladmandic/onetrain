@@ -22,7 +22,7 @@ def unload():
     if model is not None:
         model = model.to(device='cpu')
         model = None
-        free()
+
 
 def detect(image, imgsz: int = 640, half: bool = True, augment: bool = True, agnostic: bool = False, retina: bool = False, min_confidence: float = 0.6, iou: float = 0.5, max_detected: int = 10):
     predictions = model.predict(

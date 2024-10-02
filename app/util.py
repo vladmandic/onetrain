@@ -18,11 +18,14 @@ info = types.SimpleNamespace(
     complete = 0,
     samples = 0,
     step = None,
+    total = None,
     epoch = None,
     buckets = {},
     start = None,
     update = None,
     status = '',
+    its = None,
+    mem = None,
     progress = None, # modules.util.TrainProgress.TrainProgress
     validation = {}, # metadata from validation
     metadata = {}, # metadata from training
@@ -32,9 +35,12 @@ info = types.SimpleNamespace(
 # args inf using functions directly
 class TrainArgs():
     id: str
-    format: str
     concept: str
     input: str
+    model: str
+    format: str
+    reference: str
+    config: str
     train: bool
     validate: bool
     caption: bool
@@ -42,8 +48,12 @@ class TrainArgs():
     resume: bool
     bias: bool
     te: bool
+    sample: bool
     nopbar: bool
-    model: str
+    noclean: bool
+    tag: bool
+    debug: bool
+    rembg: bool
     type: str
     log: str
     output: str
@@ -58,6 +68,7 @@ class TrainArgs():
     batch: int
     resolution: int
     backup: int
+    save: int
     tmp: str
 
 

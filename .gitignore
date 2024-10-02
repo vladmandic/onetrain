@@ -5,4 +5,4 @@ __pycache__
 venv/
 tmp/
 batch.sh
-/train-*.sh
+/my-*.*

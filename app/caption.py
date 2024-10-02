@@ -9,6 +9,7 @@ from .config import get_config
 
 
 all_tags = []
+first_prompt = ''
 
 
 def caption_onetrainer(args: TrainArgs, tagger: str = ''):
@@ -65,49 +66,6 @@ def caption_onetrainer(args: TrainArgs, tagger: str = ''):
     model = None
 
 
-"""
-def caption_wdtagger(args: TrainArgs):
-    from transformers import pipeline
-    from .logger import pbar
-    folder = os.path.join(args.tmp, args.concept)
-    model = "p1atdev/wd-swinv2-tagger-v3-hf"
-    log.info(f'caption: model="{model}" path="{folder}"')
-    pipe = pipeline(
-        "image-classification",
-        model=model,
-        top_k=15,
-        trust_remote_code=True,
-        device=accelerator.device,
-    )
-    files = os.listdir(folder)
-    files = [f for f in files if os.path.splitext(f)[1].lower() in ['.jpg', '.jpeg', '.png', '.webp']]
-    if not args.nopbar:
-        task = pbar.add_task(description="caption wdtagger", text="", total=len(files))
-    with pbar if not args.nopbar else contextlib.nullcontext():
-        for i, f in enumerate(files):
-            file = os.path.join(folder, f)
-            items = pipe(file, top_k=15)
-            words = []
-            # log.debug(f'caption: "{f}"={items}')
-            for item in items:
-                k, v = item['label'], item['score']
-                if 'rating:sensitive' in k or v > 0.05:
-                    k = k.replace(' ', '_').replace('rating:', '')
-                    words.append(k)
-            # log.debug(f'caption: "{f}"={words}')
-            tag = os.path.splitext(file)[0] + '.txt'
-            with open(tag, 'a', encoding='utf8') as f:
-                txt = ', '.join(words)
-                f.write(f'{txt}, ')
-            if not args.nopbar:
-                pbar.update(task, completed=i+1, text=f'{i+1}/{len(files)} images')
-    if not args.nopbar:
-        pbar.remove_task(task)
-
-    model = None
-"""
-
-
 def caption_wdtagger(args: TrainArgs):
     import transformers
     from .logger import pbar
@@ -155,9 +113,9 @@ def caption_florence(args, repo):
     log.info(f'caption: model="{repo}" path="{folder}"')
 
     try:
-        model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True)
+        model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
         model = model.to(accelerator.device)
-        processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True)
+        processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
     except Exception as e:
         log.error(f'caption: model="{repo}" error={e}')
         return
@@ -183,12 +141,12 @@ def caption_florence(args, repo):
             generated = processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
             parsed = processor.post_process_generation(generated, task=task_prompt, image_size=(image.shape[0], image.shape[1]))
             generated_ids, generated, image = None, None, None
-            prompt = parsed.get(task_prompt, '')
-            prompt = prompt.split('\n')[0].replace('\\(', '').replace('\\)', '').replace(' a ', ' ').replace('A ', '').replace('The ', '').replace('  ', ' ').strip()
+            p = parsed.get(task_prompt, '')
+            p = p.split('\n')[0].replace('\\(', '').replace('\\)', '').replace(' a ', ' ').replace('A ', '').replace('The ', '').replace('  ', ' ').strip()
             # log.debug(f'caption: "{f}"={prompt}')
             tag = os.path.splitext(file)[0] + '.txt'
             with open(tag, 'a', encoding='utf8') as f:
-                f.write(prompt)
+                f.write(p)
             if not args.nopbar:
                 pbar.update(task, completed=i+1, text=f'{i+1}/{len(files)} images')
     if not args.nopbar:
@@ -199,6 +157,7 @@ def caption_florence(args, repo):
 
 
 def caption(args: TrainArgs):
+    global first_prompt # pylint: disable=global-statement
     info.status = 'caption'
     free()
     all_tags.clear()
@@ -242,6 +201,8 @@ def caption(args: TrainArgs):
             fn = os.path.join(folder, f)
             with open(fn, 'r', encoding='utf8') as file:
                 tag = file.read()
+                if first_prompt == '':
+                    first_prompt = tag
             tag = tag.replace('\n', ' ').replace('  ', ' ').replace(' ,', ',')[:-2].strip()
             all_tags.append(tag)
             with open(fn, 'w', encoding='utf8') as file:
@@ -267,3 +228,7 @@ def tags(args: TrainArgs):
         log.info(f'caption: tags={_tags}')
         return _tags
     return {}
+
+
+def prompt():
+    return first_prompt

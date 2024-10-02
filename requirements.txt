@@ -27,6 +27,7 @@ prodigyopt
 pytorch_optimizer
 pytorch-lightning
 PyYAML
+rembg
 rich
 ruff
 safetensors

@@ -54,6 +54,8 @@ def main():
     parser.add_argument('--backup', required=False, type=int, help='create n training backups')
     parser.add_argument('--save', required=False, type=int, help='save n intermittent steps')
     parser.add_argument('--resolution', required=False, type=int, help='training override resolution')
+    parser.add_argument("--sample", default=False, action='store_true', help='enable sampling during training')
+    parser.add_argument("--rembg", default=False, action='store_true', help='background removal')
     parser.add_argument("--nopbar", default=False, action='store_true', help='disable progress bar')
     parser.add_argument("--debug", default=False, action='store_true', help='debug logging')
     parser.add_argument('--tmp', default=os.path.join(tempfile.gettempdir(), 'onetrain'), type=str, help='training temp folder')

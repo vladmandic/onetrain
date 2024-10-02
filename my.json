@@ -3,12 +3,12 @@
     "clear",
     "concept",
     "wdtagger",
-    "cog"
+    "promptgen"
   ],
   "validate": {
     "min_size": 750000,
-    "min_width": 512,
-    "min_height": 512,
+    "min_width": 640,
+    "min_height": 640,
 
     "max_faces": 1,
     "max_blur": 0.1,
@@ -18,7 +18,7 @@
     "max_distance": 0.65
   },
   "train": {
-    "log": "tmp/onetrain.log",
+    "log": "/tmp/onetrain.log",
     "author": "vlado",
     "batch": 4,
     "epochs": 100,

@@ -142,6 +142,7 @@ def train(args: TrainArgs):
             log.info(f'update: {s}')
 
     info.busy = True
+    info.id = args.id
     info.concept = args.concept
     callbacks = TrainCallbacks()
     callbacks.set_on_update_status(log_update)
@@ -199,8 +200,8 @@ def train(args: TrainArgs):
         return
     log.info(f'save: {trainer.config.output_model_destination}')
     if info.epoch == args.epochs:
-        info.status = 'partial'
+        info.status = 'completed'
         log.info('train: completed')
     else:
-        info.status = 'completed'
+        info.status = 'partial'
         log.info('train: completed partial')

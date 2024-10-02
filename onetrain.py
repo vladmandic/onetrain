@@ -24,6 +24,7 @@ def main():
     info.status = 'init'
     global args # pylint: disable=global-statement
     parser = argparse.ArgumentParser(description = 'onetrain')
+    parser.add_argument('--id', required=False, type=str, help='id')
     parser.add_argument('--concept', required=False, type=str, help='concept name')
     parser.add_argument('--input', required=False, type=str, help='folder with training dataset')
     parser.add_argument("--model", required=False, type=str, help='stable diffusion base model')

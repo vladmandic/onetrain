@@ -22,6 +22,7 @@ else
     exit 1
 fi
 
+CUR="${PWD}"
 echo "ACTOR: $ACTOR"
 echo "REFERENCE: $REFERENCE"
 echo "MODEL: $MODEL"
@@ -29,7 +30,6 @@ echo "INPUT: $INPUT"
 echo "OUTPUT: $OUTPUT"
 echo "CONFIG: $CUR/$CONFIG"
 
-CUR="${PWD}"
 cd "${ONETRAINER}"
 "${CUR}"/onetrain.py \
   --onetrainer "$ONETRAINER" \

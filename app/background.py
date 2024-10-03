@@ -20,7 +20,7 @@ def remove(image):
     args['data'] = None
     if args['session'] is None:
         args['session'] = rembg.new_session(model, providers)
-        log.info(f'remove background: model={model} providers={ort.get_available_providers()}')
+        log.info(f'remove background: model={model} providers={ort.get_available_providers()}') # pylint: disable=c-extension-no-member
         log.info(f'remove background: {args}')
     args['data'] = image
     output = rembg.remove(**args)

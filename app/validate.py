@@ -42,11 +42,13 @@ def check_blur(image):
 def detect_face(image):
     from .face import load, detect
     load()
-    faces, scores = detect(image, min_confidence=config.min_face_confidence / 4, max_detected=config.max_faces)
+    faces, scores = detect(image, min_confidence=config.min_face_confidence / 2, max_detected=10)
     if len(faces) == 0:
         raise ValueError('face-detected: none')
     if max(scores) < config.min_face_confidence:
         raise ValueError(f'face-confidence: {max(scores)}')
+    if len(faces) > config.max_faces:
+        raise ValueError(f'face-count: {len(faces)}')
     face = faces[0]
     h, w, _c = face.shape
     if h < config.min_face_size:

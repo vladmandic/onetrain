@@ -1,6 +1,6 @@
 import os
 from .logger import log
-from .util import accelerator, free
+from .util import accelerator
 
 
 model = None

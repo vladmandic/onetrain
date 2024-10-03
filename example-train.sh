@@ -4,6 +4,8 @@ ONETRAINER=~/branches/onetrainer/
 INPUT=~/generative/Input
 MODEL=/mnt/models/stable-diffusion/sdxl/TempestV0.1-Artistic.safetensors
 OUTPUT=/mnt/models/Lora
+CONFIG=example-config.json
+TYPE=sdxl
 ACTOR="$1"
 REFERENCE="$2"
 
@@ -25,15 +27,15 @@ echo "REFERENCE: $REFERENCE"
 echo "MODEL: $MODEL"
 echo "INPUT: $INPUT"
 echo "OUTPUT: $OUTPUT"
+echo "CONFIG: $CUR/$CONFIG"
 
-source venv/bin/activate
 CUR="${PWD}"
 cd "${ONETRAINER}"
 "${CUR}"/onetrain.py \
   --onetrainer "$ONETRAINER" \
   --model "$MODEL" \
-  --type sdxl \
-  --config my.json \
+  --type $TYPE \
+  --config "$CUR/$CONFIG" \
   --concept "$ACTOR" \
   --reference "$INPUT/$ACTOR/$REFERENCE" \
   --input "$INPUT/$ACTOR/" \

@@ -9,7 +9,6 @@
     "min_size": 750000,
     "min_width": 640,
     "min_height": 640,
-
     "max_faces": 1,
     "max_blur": 0.1,
     "min_dynamic_range": 20,
@@ -19,7 +18,7 @@
   },
   "train": {
     "log": "/tmp/onetrain.log",
-    "author": "vlado",
+    "author": "vladmandic",
     "batch": 4,
     "epochs": 100,
     "rank": 16,

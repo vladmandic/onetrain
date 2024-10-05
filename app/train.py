@@ -195,7 +195,7 @@ def train(args: TrainArgs):
         pbar.remove_task(task)
     del info.metadata
     info.busy = False
-    log.debug(f'info: {info}')
+    # log.debug(f'info: {info}')
     if info.step is None or info.epoch is None:
         info.status = 'failed'
         log.error('train: failed')

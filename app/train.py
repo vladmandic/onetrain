@@ -4,7 +4,6 @@ import json
 import contextlib
 import datetime
 import random
-import cv2
 import torch
 from .logger import log, console
 from .util import TrainArgs, set_path, clean_dict, info, free
@@ -101,21 +100,6 @@ def set_config(args: TrainArgs):
     return train_config, config
 
 
-def buckets(args: TrainArgs):
-    set_path(args)
-    from modules.module.BaseImageCaptionModel import BaseImageCaptionModel # pylint: disable=import-error
-    info.samples = BaseImageCaptionModel._BaseImageCaptionModel__get_sample_filenames(args.input) # pylint: disable=protected-access
-    info.buckets = {}
-    for i in info.samples:
-        img = cv2.imread(i)
-        resolution = f'{img.shape[0]}x{img.shape[1]}'
-        if resolution not in info.buckets:
-            info.buckets[resolution] = 1
-        else:
-            info.buckets[resolution] += 1
-    log.info(f'concept: {args.concept} samples={len(info.samples)} path={args.input} buckets={info.buckets}')
-
-
 def train(args: TrainArgs):
     if not args.train:
         return
@@ -123,12 +107,12 @@ def train(args: TrainArgs):
 
     info.status = 'start'
     set_path(args)
-    buckets(args)
 
     from .logger import pbar
     from modules.util.callbacks.TrainCallbacks import TrainCallbacks # pylint: disable=import-error
     from modules.util.commands.TrainCommands import TrainCommands # pylint: disable=import-error
     from modules.trainer.GenericTrainer import GenericTrainer # pylint: disable=import-error
+    from modules.module.BaseImageCaptionModel import BaseImageCaptionModel # pylint: disable=import-error
 
     def train_progress_callback(p, max_sample, max_epoch):
         ts = time.time()
@@ -159,6 +143,7 @@ def train(args: TrainArgs):
     info.busy = True
     info.id = args.id
     info.concept = args.concept
+    info.samples = BaseImageCaptionModel._BaseImageCaptionModel__get_sample_filenames(args.input) # pylint: disable=protected-access
     callbacks = TrainCallbacks()
     callbacks.set_on_update_status(log_update)
     callbacks.set_on_update_train_progress(train_progress_callback)

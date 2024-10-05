@@ -26,6 +26,7 @@ info = types.SimpleNamespace(
     status = '',
     its = None,
     mem = None,
+    warnings = [],
     progress = None, # modules.util.TrainProgress.TrainProgress
     validation = {}, # metadata from validation
     metadata = {}, # metadata from training

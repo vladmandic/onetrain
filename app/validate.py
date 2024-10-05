@@ -9,6 +9,7 @@ from .config import get_config
 
 config = None
 disable = []
+_faces = {}
 
 
 def check_dynamicrange(image, epsilon=1e-10):
@@ -17,7 +18,7 @@ def check_dynamicrange(image, epsilon=1e-10):
     I_max = torch.max(tensor)
     I_min = torch.clamp(I_min, min=epsilon)
     I_max = torch.clamp(I_max, min=epsilon)
-    dynamic_range_db = 20 * torch.log10(I_max / I_min)
+    dynamic_range_db = round(torch.log10(I_max / I_min).item(), 2)
     if dynamic_range_db < config.min_dynamic_range:
         raise ValueError(f'face-range: {dynamic_range_db}')
 
@@ -42,19 +43,27 @@ def check_blur(image):
 def detect_face(image):
     from .face import load, detect
     load()
-    faces, scores = detect(image, min_confidence=config.min_face_confidence / 2, max_detected=10)
-    if len(faces) == 0:
+    all_faces, scores, boxes = detect(image, min_confidence=config.min_face_confidence / 2, max_detected=10)
+    if len(all_faces) == 0:
         raise ValueError('face-detected: none')
     if max(scores) < config.min_face_confidence:
         raise ValueError(f'face-confidence: {max(scores)}')
-    if len(faces) > config.max_faces:
-        raise ValueError(f'face-count: {len(faces)}')
-    face = faces[0]
+    if len(all_faces) > config.max_faces:
+        raise ValueError(f'face-count: {len(all_faces)}')
+    face = all_faces[0]
+    box = boxes[0]
     h, w, _c = face.shape
     if h < config.min_face_size:
         raise ValueError(f'face-height: {h}')
     if w < config.min_face_size:
         raise ValueError(f'face-width: {w}')
+    face_perc = round((h * w) / (image.shape[0] * image.shape[1]), 2)
+    if face_perc < config.min_face_perc and config.min_face_perc > 0:
+        raise ValueError(f'face-area: {face_perc}')
+    if box[0] == 0 or box[1] == 0 or box[2] == image.shape[1] or box[3] == image.shape[0]:
+        raise ValueError(f'face-box: {box}')
+    # if expand[0] == 0 or expand[1] == 0 or expand[2] == image.shape[1] or expand[3] == image.shape[0]:
+    #    raise ValueError(f'face-expand: {box}')
     return face
 
 
@@ -85,6 +94,7 @@ def validate(f, image, args: TrainArgs):
             return None
         check_size(image)
         face = detect_face(image)
+        _faces[os.path.basename(f)] = face.shape[1], face.shape[0]
         check_blur(face)
         check_dynamicrange(face)
         check_similarity(args.reference, image)
@@ -92,4 +102,8 @@ def validate(f, image, args: TrainArgs):
         # from app.logger import console
         # console.print_exception(max_frames=20)
         return { os.path.basename(f): str(e) }
-    return None
+    return face
+
+
+def faces():
+    return _faces

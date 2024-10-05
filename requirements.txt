@@ -1,11 +1,15 @@
 --extra-index-url https://download.pytorch.org/whl/cu124
-setuptools==69.5.1
+# versioned
+deepface==0.0.93
+diffusers==0.30.3
+pooch==1.8.1
 pydantic==1.10.15
+setuptools==69.5.1
+tensorflow==2.16.2
 torch==2.4.1+cu124
 torchvision==0.19.1+cu124
-deepface==0.0.93
 transformers==4.43.4
-diffusers==0.30.3
+# latest
 accelerate
 bitsandbytes
 customtkinter
@@ -21,9 +25,10 @@ omegaconf
 onnxruntime-gpu
 open-clip-torch
 opencv-contrib-python-headless
+pi_heif
 pillow
-pooch==1.8.1
 prodigyopt
+pylint
 pytorch_optimizer
 pytorch-lightning
 PyYAML
@@ -35,10 +40,8 @@ scalene
 schedulefree
 scipy
 tensorboard
-tensorflow==2.16.2
 tf-keras
 torch
 torchvision
 tqdm
 ultralytics
-pi_heif

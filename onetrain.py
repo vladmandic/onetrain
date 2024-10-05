@@ -112,7 +112,6 @@ if __name__ == '__main__':
         log.debug('debug logging enabled')
     try:
         prepare(args)
-        exit(0)
         caption(args)
         train(args)
     except KeyboardInterrupt:

@@ -15,9 +15,10 @@ first_prompt = ''
 def caption_onetrainer(args: TrainArgs, tagger: str = ''):
     set_path(args)
     from .logger import pbar
+    task = None
 
     def caption_progress_callback(current, total):
-        if not args.nopbar:
+        if not args.nopbar and task is not None:
             pbar.update(task, completed=current, total=total, text=f'{current}/{total} images')
 
 

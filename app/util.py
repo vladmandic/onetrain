@@ -63,6 +63,9 @@ class TrainArgs():
     epochs: int
     accumulation: int
     optimizer: str
+    lr: float
+    d: float
+    dropoout: float
     scheduler: str
     rank: int
     alpha: int

@@ -112,7 +112,7 @@
     "latent_caching": true,
     "clear_cache_before_training": true,
     "learning_rate_scheduler": "COSINE",
-    "learning_rate": 1,
+    "learning_rate": 1.0,
     "learning_rate_warmup_steps": 200,
     "learning_rate_cycles": 1,
     "epochs": 100,
@@ -142,7 +142,7 @@
     "vb_loss_strength": 1.0,
     "loss_weight_fn": "CONSTANT",
     "loss_weight_strength": 5.0,
-    "dropout_probability": 0.0,
+    "dropout_probability": 0.1,
     "loss_scaler": "NONE",
     "learning_rate_scaler": "NONE",
     "offset_noise_weight": 0.0,
@@ -199,7 +199,7 @@
         "stop_training_after": null,
         "stop_training_after_unit": "NEVER",
         "learning_rate": null,
-        "weight_dtype": "FLOAT_32"
+        "weight_dtype": "BFLOAT_16"
     },
     "effnet_encoder": {
         "__version": 0,
@@ -258,7 +258,7 @@
     "embedding_weight_dtype": "FLOAT_16",
     "lora_model_name": "",
     "lora_rank": 16,
-    "lora_alpha": 4.0,
+    "lora_alpha": 16,
     "lora_decompose": false,
     "lora_weight_dtype": "FLOAT_32", 
     "optimizer": {
@@ -276,7 +276,7 @@
         "centered": false,
         "clip_threshold": null,
         "d0": null,
-        "d_coef": null,
+        "d_coef": 1.0,
         "dampening": null,
         "decay_rate": null,
         "decouple": false,

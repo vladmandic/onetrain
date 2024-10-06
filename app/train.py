@@ -28,8 +28,12 @@ def set_config(args: TrainArgs):
         config['base_model_name'] = args.model
     if args.optimizer:
         config['optimizer']['optimizer'] = args.optimizer
+    if args.d:
+        config['optimizer']['d_coef'] = args.d
     if args.scheduler:
         config['learning_rate_scheduler'] = args.scheduler
+    if args.lr:
+        config['learning_rate'] = args.lr
     if args.rank:
         config['lora_rank'] = args.rank
     if args.alpha:
@@ -125,7 +129,7 @@ def train(args: TrainArgs):
         info.status = 'train'
         info.its = p.global_step / (ts - info.start)
         mem = torch.cuda.mem_get_info()
-        info.mem = f'{1-mem[0]/mem[1]:.0f}'
+        info.mem = f'{1-mem[0]/mem[1]:.2f}'
 
         if not args.nopbar:
             pbar.update(task, completed=info.step, total=info.total, description="train", text=f'step: {info.step} epoch: {info.epoch+1}/{max_epoch} batch: {p.epoch_step} samples: {max_sample} its: {info.its:.2f} memory: {info.mem}')

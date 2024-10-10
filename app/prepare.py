@@ -61,6 +61,7 @@ def save_image(image: np.ndarray, file, args: TrainArgs, same=False):
         image = remove(image)
     if not same:
         tgt = os.path.join(folder, str(uuid.uuid4())) + args.format
+        info.images.append(tgt)
     else:
         tgt = os.path.join(folder, file)
     # log.debug(f'image save: {file} -> {tgt}')
@@ -234,7 +235,7 @@ def prepare(args: TrainArgs):
         else:
             msg = f'validate: min-face={min_face} max-face={max_face} generated={generate} total={all_faces}'
             log.info(msg)
-    log.info(f'prepare: buckets={info.buckets}')
+    log.info(f'prepare: total={len(info.images)} buckets={info.buckets}')
 
     args.input = folder
     t1 = time.time()

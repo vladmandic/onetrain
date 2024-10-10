@@ -26,12 +26,12 @@ info = types.SimpleNamespace(
     status = '',
     its = None,
     mem = None,
+    images = [],
     warnings = [],
     progress = None, # modules.util.TrainProgress.TrainProgress
     validation = {}, # metadata from validation
     metadata = {}, # metadata from training
 )
-
 
 # args inf using functions directly
 class TrainArgs():

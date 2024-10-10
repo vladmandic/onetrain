@@ -122,17 +122,18 @@ def train(args: TrainArgs):
         ts = time.time()
         info.progress = p
         info.total = max_sample * max_epoch
-        info.complete = int(100 * p.global_step / info.total)
         info.epoch = p.epoch
         info.step = p.global_step
+        info.complete = int(100 * info.step / info.total)
         info.update = time.time()
         info.status = 'train'
         info.its = p.global_step / (ts - info.start)
         mem = torch.cuda.mem_get_info()
         info.mem = f'{1-mem[0]/mem[1]:.2f}'
-
+        if p.global_step == 1:
+            log.info(f'settings: steps={info.total} epochs={max_epoch} images={len(info.samples)} samples={max_sample}')
         if not args.nopbar:
-            pbar.update(task, completed=info.step, total=info.total, description="train", text=f'step: {info.step} epoch: {info.epoch+1}/{max_epoch} batch: {p.epoch_step} samples: {max_sample} its: {info.its:.2f} memory: {info.mem}')
+            pbar.update(task, completed=info.step, total=info.total, description="train", text=f'step: {info.step}/{info.total} epoch: {info.epoch+1}/{max_epoch} batch: {p.epoch_step} samples: {max_sample} its: {info.its:.2f} memory: {info.mem}')
 
     def log_update(s: str):
         if 'loading' in s:
@@ -183,7 +184,7 @@ def train(args: TrainArgs):
         trainer.model.model_spec.tags = json.dumps(tags(args))
         info.metadata = trainer.model.model_spec
         log.debug(f'metadata: {json.dumps(trainer.model.model_spec.__dict__, indent=2)}')
-        log.info(f'settings: optimizer={config.optimizer.optimizer} scheduler={config.learning_rate_scheduler} rank={config.lora_rank} alpha={config.lora_alpha} batch={config.batch_size} accumulation={config.gradient_accumulation_steps} epochs={config.epochs}')
+        log.info(f'settings: optimizer={config.optimizer.optimizer} scheduler={config.learning_rate_scheduler} rank={config.lora_rank} alpha={config.lora_alpha} batch={config.batch_size} accumulation={config.gradient_accumulation_steps} dropout={config.dropout_probability} lr={config.learning_rate} d={config.optimizer.d_coef} bias={config.optimizer.use_bias_correction}') # noqa: E501
         free()
         log.info(f'lora: peft={trainer.model.unet_lora.peft_type} class={trainer.model.unet_lora.klass} train={trainer.model.train_dtype}')
         log.info('train: start')

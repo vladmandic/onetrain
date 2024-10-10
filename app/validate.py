@@ -47,7 +47,7 @@ def detect_face(image):
     if len(all_faces) == 0:
         raise ValueError('face-detected: none')
     if max(scores) < config.min_face_confidence:
-        raise ValueError(f'face-confidence: {max(scores)}')
+        raise ValueError(f'face-confidence: {max(scores):.2f}')
     if len(all_faces) > config.max_faces:
         raise ValueError(f'face-count: {len(all_faces)}')
     face = all_faces[0]

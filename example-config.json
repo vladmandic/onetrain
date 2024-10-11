@@ -33,9 +33,9 @@
     "lr": 1.0,
     "d": 1.0,
     "validate": true,
-    "caption": false,
+    "caption": true,
     "tag": true,
-    "train": false,
+    "train": true,
     "debug": true
   }
 }

@@ -1,7 +1,11 @@
-# OneTrainer Wrapper
+# OneTrain: Single-stop for training LoRA models
 
-Wrapper for [OneTrainer](https://github.com/Nerogar/OneTrainer) by [@nerogar](https://github.com/nerogar)  
-With image validation, captioning, logging and progress reporting  
+1. Validate dataset: sizes, dynamic ranges, faces, etc.
+2. Prepare dataset: convert, optimize buckets, etc.
+3. Caption dataset: multiple captioning models
+4. Train model: using [OneTrainer](https://github.com/Nerogar/OneTrainer/)
+5. Unified logging and real-time monitoring
+
 Can be used as a *command line tool* or as a *Python module*  
 
 ## Usage: CLI
@@ -18,3 +22,10 @@ onetrain.caption(onetrain.args)
 onetrain.train(onetrain.args)
 onetrainer.log(onetrain.info) # info object contains real-time information about training that can be monitored
 ```
+
+## Reference
+
+- <https://github.com/Nerogar/OneTrainer/wiki/LoRA>
+- <https://github.com/Nerogar/OneTrainer/wiki/Training>
+- <https://github.com/Nerogar/OneTrainer/wiki/Optimizers>
+- <https://civitai.com/articles/3105/essential-to-advanced-guide-to-training-a-lora>

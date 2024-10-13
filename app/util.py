@@ -35,45 +35,51 @@ info = types.SimpleNamespace(
 
 # args inf using functions directly
 class TrainArgs():
-    id: str
     concept: str
-    input: str
-    model: str
-    format: str
-    reference: str
-    config: str
-    train: bool
-    validate: bool
-    caption: bool
-    triton: bool
-    resume: bool
-    bias: bool
-    te: bool
-    sample: bool
-    nopbar: bool
-    noclean: bool
-    tag: bool
-    debug: bool
-    rembg: bool
     type: str
-    log: str
+    author: str
+
+    model: str
+    input: str
     output: str
     onetrainer: str
-    author: str
+    log: str
+    tmp: str
+
+    config: str
+    reference: str
+
+    validate: bool
+    caption: bool
+    tag: bool
+    train: bool
+    sample: bool
+    rembg: bool
+    save: int
+    backup: int
+    resume: bool
+
+    te: bool
+    nobias: bool
+    gradient: bool
     epochs: int
     accumulation: int
     optimizer: str
+    scheduler: str
     lr: float
     d: float
     dropoout: float
-    scheduler: str
     rank: int
     alpha: int
     batch: int
     resolution: int
-    backup: int
-    save: int
-    tmp: str
+
+    id: str
+    format: str
+    debug: bool
+    triton: bool
+    nopbar: bool
+    noclean: bool
 
 
 accelerator = accelerate.Accelerator()

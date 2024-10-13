@@ -52,8 +52,10 @@ def set_config(args: TrainArgs):
         config['continue_last_backup'] = True
     if args.te:
         config['text_encoder']['train'] = True
-    if args.bias:
-        config['optimizer']['use_bias_correction'] = True
+    if args.nobias:
+        config['optimizer']['use_bias_correction'] = False
+    if args.gradient:
+        config['gradient_checkpointing'] = True
     if args.backup:
         config['backup_after'] = int(config['epochs'] / args.backup)
         config['backup_after_unit'] = 'EPOCH'

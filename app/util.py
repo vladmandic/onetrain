@@ -118,7 +118,7 @@ def free():
     device = accelerator.device
 
     if torch.cuda.is_available() and 'cuda' in str(device):
-        with torch.cuda.device(accelerator.device):
+        with torch.cuda.device(device):
             torch.cuda.empty_cache()
             torch.cuda.ipc_collect()
         avail, total = torch.cuda.mem_get_info()

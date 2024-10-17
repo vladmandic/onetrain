@@ -102,7 +102,7 @@
     "output_dtype": "FLOAT_16",
     "output_model_format": "SAFETENSORS",
     "output_model_destination": "",
-    "gradient_checkpointing": false,
+    "gradient_checkpointing": true,
     "force_circular_padding": false,
     "concept_file_name": "",
     "concepts": null,

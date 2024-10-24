@@ -218,7 +218,9 @@ def prepare(args: TrainArgs):
                 msg = f'validate: min-buckets={cfg.get("min_bucket", None)} size={k} bucket={v}'
                 info.warnings.append(msg)
                 log.info(msg)
-        log.info(f'aspect ratios: avg={sum(ideal)/len(ideal):.1f} mean={statistics.mean(ideal):.1f} min={min(ideal):.1f} max={max(ideal):.1f}')
+        if len(ideal) > 0:
+            log.info(f'aspect ratios: avg={sum(ideal)/len(ideal):.1f} mean={statistics.mean(ideal):.1f} min={min(ideal):.1f} max={max(ideal):.1f}')
+            
         min_face = 0
         max_face = 0
         for _k, v in faces().items():

@@ -115,8 +115,13 @@ def free():
     import torch
     from .logger import log
     gc.collect()
-    with torch.cuda.device(accelerator.device):
-        torch.cuda.empty_cache()
-        torch.cuda.ipc_collect()
-    avail, total = torch.cuda.mem_get_info()
-    log.debug(f'cuda memory: avail={avail / 1024 / 1024 / 1024:.3f} total={total / 1024 / 1024 / 1024:.3f}')
+    device = accelerator.device
+
+    if torch.cuda.is_available() and 'cuda' in str(device):
+        with torch.cuda.device(device):
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+        avail, total = torch.cuda.mem_get_info()
+        log.debug(f'cuda memory: avail={avail / 1024 / 1024 / 1024:.3f} total={total / 1024 / 1024 / 1024:.3f}')
+    else:
+        log.debug('CUDA not available or device is CPU. Skipping CUDA memory cleanup.')

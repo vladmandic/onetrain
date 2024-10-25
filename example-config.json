@@ -3,7 +3,7 @@
     "clear",
     "concept",
     "wdtagger",
-    "promptgen"
+    "cog"
   ],
   "validate": {
     "min_size": 500000,

@@ -23,7 +23,7 @@
     "clear",
     "concept",
     "wdtagger",
-    "promptgen"
+    "cog"
   ],
   "tag": 0.4,
   "samples": [

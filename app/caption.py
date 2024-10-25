@@ -114,9 +114,13 @@ def caption_florence(args, repo):
     log.info(f'caption: model="{repo}" path="{folder}"')
 
     try:
-        model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
+        if 'PromptGen' in repo:
+            model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
+            processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
+        else:
+            model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True)
+            processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True)
         model = model.to(accelerator.device)
-        processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
     except Exception as e:
         log.error(f'caption: model="{repo}" error={e}')
         return

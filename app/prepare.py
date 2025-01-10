@@ -25,6 +25,7 @@ resized = {}
 bucketized = {'ar': [], 'w': [], 'h': []}
 
 
+
 def resize_image(f, image: Image.Image, read = False) -> Image.Image:
     sz = get_config('validate').get('size_round', 1)
     ar0 = round(image.width / image.height, 1)
@@ -136,8 +137,22 @@ def optimize_buckets(args: TrainArgs, methods=''):
 
 def prepare(args: TrainArgs):
     free()
+    #init_data()
+    passed.clear()
+    failed.clear()
+    skipped.clear()
+    captions.clear()
+    convert.clear()
+    generate.clear()
+    pairs.clear()
+    buckets.clear()
+    resized.clear()
+    bucketized['ar'].clear()
+    bucketized['w'].clear()
+    bucketized['h'].clear()
     from .logger import pbar
     info.status = 'prepare'
+    info.id = args.id
     info.concept = args.concept
     from pi_heif import register_heif_opener
     register_heif_opener()

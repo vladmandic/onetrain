@@ -106,7 +106,7 @@ def caption_wdtagger(args: TrainArgs):
     processor = None
 
 
-def caption_florence(args, repo):
+def caption_florence(args, repo, task_prompt: str = "<MORE_DETAILED_CAPTION>"):
     import transformers
     from .logger import pbar
 
@@ -114,13 +114,18 @@ def caption_florence(args, repo):
     log.info(f'caption: model="{repo}" path="{folder}"')
 
     try:
-        model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
+        """
+        if 'PromptGen' in repo:
+            model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
+            processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
+        else:
+        """
+        model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True)
+        processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True)
         model = model.to(accelerator.device)
-        processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
     except Exception as e:
         log.error(f'caption: model="{repo}" error={e}')
         return
-    task_prompt = "<MORE_DETAILED_CAPTION>"
 
     files = os.listdir(folder)
     files = [f for f in files if os.path.splitext(f)[1].lower() == args.format]
@@ -184,7 +189,11 @@ def caption(args: TrainArgs):
         if captioner == 'wdtagger':
             caption_wdtagger(args)
         if captioner == 'promptgen':
-            caption_florence(args, "MiaoshouAI/Florence-2-base-PromptGen-v1.5")
+            caption_florence(args, "MiaoshouAI/Florence-2-base-PromptGen-v2.0", '<MORE_DETAILED_CAPTION>')
+        if captioner == 'promptgen-tags':
+            caption_florence(args, "MiaoshouAI/Florence-2-base-PromptGen-v2.0", '<GENERATE_TAGS>')
+        if captioner == 'promptgen-aio':
+            caption_florence(args, "MiaoshouAI/Florence-2-base-PromptGen-v2.0", '<MIXED_CAPTION>')
         if captioner == 'florence':
             caption_florence(args, "microsoft/Florence-2-base")
         if captioner == 'cog':

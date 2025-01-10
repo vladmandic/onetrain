@@ -3,13 +3,11 @@
     "clear",
     "concept",
     "wdtagger",
-    "promptgen"
+    "cog"
   ],
   "validate": {
-    "bucketize": "ar,w,h",
-    "size_threshold": 0.50,
-    "size_round": 64,
     "min_size": 500000,
+    "max_size": 2000000,
     "min_width": 500,
     "min_height": 500,
     "max_faces": 1,
@@ -21,7 +19,10 @@
     "max_distance": 0.70,
     "min_bucket": 2,
     "min_portraits": 0.5,
-    "gen_portrait": false
+    "gen_portrait": false,
+    "resize_threshold": 0.30,
+    "size_round": 64,
+    "bucketize": "ar,w,h"
   },
   "train": {
     "log": "/tmp/onetrain.log",

@@ -57,6 +57,9 @@ def read_image(f: str) -> np.ndarray:
 def save_image(image: np.ndarray, file, args: TrainArgs, same=False):
     folder = os.path.join(args.tmp, args.concept)
     image = Image.fromarray(image)
+    max_size = get_config('validate').get('max_size', image.width * image.height)
+    while image.width * image.height > max_size:
+        image = image.resize((int(image.width/1.1), int(image.height/1.1)), Image.Resampling.LANCZOS)
     image = resize_image(file, image)
     if args.rembg:
         image = remove(image)
@@ -93,7 +96,7 @@ def optimize_buckets(args: TrainArgs, methods=''):
     methods = methods.split(',')
     methods = [m.strip() for m in methods]
     folder = os.path.join(args.tmp, args.concept)
-    threshold = get_config('validate').get('resize_threshold', 0.30)
+    threshold = get_config('validate').get('resize_threshold', 0.0)
     for method in methods:
         ok = [k for k, v in buckets.items() if len(v) >= get_config('validate').get('min_bucket', 1)]
         todo = [v for k, v in buckets.items() if len(v) < get_config('validate').get('min_bucket', 1)]

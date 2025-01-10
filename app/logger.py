@@ -2,6 +2,7 @@ import functools
 import logging
 import logging.handlers
 import warnings
+import platform
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn, TimeElapsedColumn
@@ -11,6 +12,14 @@ from tqdm import tqdm
 console = Console(log_time=True, log_time_format='%H:%M:%S-%f')
 log = logging.getLogger(__name__)
 pbar = None
+
+
+class HostnameFilter(logging.Filter):
+    hostname = platform.node()
+
+    def filter(self, record):
+        record.hostname = HostnameFilter.hostname
+        return True
 
 
 def init_logger(log_file: str = None):
@@ -38,7 +47,8 @@ def init_logger(log_file: str = None):
     # log to file
     if log_file is not None:
         log_handler_file = logging.handlers.RotatingFileHandler(log_file, encoding='utf-8', delay=True)
-        log_handler_file.formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(module)s | %(message)s')
+        log_handler_file.addFilter(HostnameFilter())
+        log_handler_file.formatter = logging.Formatter('%(asctime)s | %(hostname)s | %(levelname)s | %(name)s | %(module)s | %(message)s')
         log_handler_file.setLevel(logging.DEBUG)
         log.addHandler(log_handler_file)
     log.setLevel(logging.INFO)

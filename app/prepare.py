@@ -135,16 +135,18 @@ def optimize_buckets(args: TrainArgs, methods=''):
 def prepare(args: TrainArgs):
     free()
     #init_data()
-    passed = []
-    failed = []
-    skipped = []
-    captions = []
-    convert = []
-    generate = {}
-    pairs = {}
-    buckets = {}
-    resized = {}
-    bucketized = {'ar': [], 'w': [], 'h': []}
+    passed.clear()
+    failed.clear()
+    skipped.clear()
+    captions.clear()
+    convert.clear()
+    generate.clear()
+    pairs.clear()
+    buckets.clear()
+    resized.clear()
+    bucketized['ar'].clear()
+    bucketized['w'].clear()
+    bucketized['h'].clear()
     from .logger import pbar
     info.status = 'prepare'
     info.id = args.id

@@ -12,6 +12,8 @@
     "min_face_perc": 0.04,
     "min_face_confidence": 0.6,
     "min_bucket": 1,
+    "max_face_size": 0.33,
+    "max_face_overlap": 0.25,
     "max_distance": 0.70,
     "min_portraits": 0.5,
     "gen_portrait": false,

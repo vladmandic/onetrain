@@ -10,6 +10,7 @@ from .config import get_config
 
 all_tags = []
 first_prompt = ''
+dtype = torch.float16
 
 
 def caption_onetrainer(args: TrainArgs, tagger: str = ''):
@@ -25,7 +26,7 @@ def caption_onetrainer(args: TrainArgs, tagger: str = ''):
     if tagger == 'blip':
         log.info(f'caption: model="Salesforce/blip2-opt-2.7b" path={args.input}')
         from modules.module.Blip2Model import Blip2Model # pylint: disable=import-error
-        model = Blip2Model(device=accelerator.device, dtype=torch.float16)
+        model = Blip2Model(device=accelerator.device, dtype=dtype)
         info.busy = True
         if not args.nopbar:
             task = pbar.add_task(description="caption blip", text="", total=0)
@@ -46,7 +47,7 @@ def caption_onetrainer(args: TrainArgs, tagger: str = ''):
     if tagger == 'wd14':
         log.info(f'caption: model="SmilingWolf/wd-v1-4-vit-tagger-v2" path={args.input}')
         from modules.module.WDModel import WDModel # pylint: disable=import-error
-        model = WDModel(device=accelerator.device, dtype=torch.float16)
+        model = WDModel(device=accelerator.device, dtype=dtype)
         if not args.nopbar:
             task = pbar.add_task(description="caption wd14", text="", total=0)
         with pbar if not args.nopbar else contextlib.nullcontext():
@@ -75,7 +76,8 @@ def caption_wdtagger(args: TrainArgs):
     repo = "p1atdev/wd-swinv2-tagger-v3-hf"
     log.info(f'caption: model="{repo}" path="{folder}" threshold={threshold}')
     model = transformers.AutoModelForImageClassification.from_pretrained(repo, trust_remote_code=True)
-    processor = transformers.AutoImageProcessor.from_pretrained(repo, trust_remote_code=True)
+    processor = transformers.AutoImageProcessor.from_pretrained(repo, trust_remote_code=True, use_fast=False)
+    # model = model.to(device=accelerator.device, dtype=dtype) # wdtagger somehow runs faster on cpu
     files = os.listdir(folder)
     files = [f for f in files if os.path.splitext(f)[1].lower() in ['.jpg', '.jpeg', '.png', '.webp']]
     if not args.nopbar:
@@ -92,7 +94,7 @@ def caption_wdtagger(args: TrainArgs):
             results = { model.config.id2label[i]: logit.float() for i, logit in enumerate(logits) }
             results = { k: v.item() for k, v in sorted(results.items(), key=lambda item: item[1], reverse=True) if v > threshold }
             words = list(results)
-            # log.debug(f'caption: "{f}"={words}')
+            log.debug(f'caption: "{f}"={words}')
             tag = os.path.splitext(file)[0] + '.txt'
             with open(tag, 'a', encoding='utf8') as f:
                 txt = ', '.join(words).replace('rating:', '')
@@ -114,15 +116,9 @@ def caption_florence(args, repo, task_prompt: str = "<MORE_DETAILED_CAPTION>"):
     log.info(f'caption: model="{repo}" path="{folder}"')
 
     try:
-        """
-        if 'PromptGen' in repo:
-            model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
-            processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True, revision='c06a5f02cc6071a5d65ee5d294cf3732d3097540')
-        else:
-        """
         model = transformers.AutoModelForCausalLM.from_pretrained(repo, trust_remote_code=True)
         processor = transformers.AutoProcessor.from_pretrained(repo, trust_remote_code=True)
-        model = model.to(accelerator.device)
+        model = model.to(device=accelerator.device, dtype=dtype)
     except Exception as e:
         log.error(f'caption: model="{repo}" error={e}')
         return
@@ -136,7 +132,7 @@ def caption_florence(args, repo, task_prompt: str = "<MORE_DETAILED_CAPTION>"):
             file = os.path.join(folder, f)
             image = cv2.imread(file)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            inputs = processor(text=task_prompt, images=image, return_tensors="pt").to(accelerator.device)
+            inputs = processor(text=task_prompt, images=image, return_tensors="pt").to(device=model.device, dtype=model.dtype)
             generated_ids = model.generate(
                 input_ids=inputs["input_ids"],
                 pixel_values=inputs["pixel_values"],
@@ -149,10 +145,10 @@ def caption_florence(args, repo, task_prompt: str = "<MORE_DETAILED_CAPTION>"):
             generated_ids, generated, image = None, None, None
             p = parsed.get(task_prompt, '')
             p = p.split('\n')[0].replace('\\(', '').replace('\\)', '').replace(' a ', ' ').replace('A ', '').replace('The ', '').replace('  ', ' ').strip()
-            # log.debug(f'caption: "{f}"={prompt}')
             tag = os.path.splitext(file)[0] + '.txt'
+            log.debug(f'caption: "{f}"="{p}"')
             with open(tag, 'a', encoding='utf8') as f:
-                f.write(p)
+                f.write(p + '  ')
             if not args.nopbar:
                 pbar.update(task, completed=i+1, text=f'{i+1}/{len(files)} images')
     if not args.nopbar:
@@ -234,7 +230,7 @@ def tags(args: TrainArgs):
         _tags.pop(args.concept, None)
         _tags = { args.concept: count, **_tags }
         t1 = time.time()
-        log.info(f'caption: theshold={threshold} text={len(all_text)} words={len(all_words)} tags={len(all_tags)} time={t1-t0:.2f}')
+        log.info(f'caption: theshold={threshold:.2f} text={len(all_text)} words={len(all_words)} tags={len(all_tags)} time={t1-t0:.2f}')
         log.info(f'caption: tags={_tags}')
         return _tags
     return {}

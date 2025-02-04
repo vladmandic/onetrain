@@ -25,19 +25,24 @@ resized = {}
 bucketized = {'ar': [], 'w': [], 'h': []}
 
 
-
 def resize_image(f, image: Image.Image, read = False) -> Image.Image:
-    sz = get_config('validate').get('size_round', 1)
+    size_round = get_config('validate').get('size_round', 1)
+    resize_longest = get_config('validate').get('resize_longest', 1)
+    if min(image.width, image.height) > resize_longest:
+        if image.width > image.height:
+            image.thumbnail((image.width, resize_longest))
+        else:
+            image.thumbnail((resize_longest, image.height))
     ar0 = round(image.width / image.height, 1)
     ar1 = 0
     while ar0 != ar1:
-        w, h = sz * (image.width // sz), sz * (image.height // sz)
+        w, h = size_round * (image.width // size_round), size_round * (image.height // size_round)
         ar1 = round(w / h, 1)
-        sz = sz // 2
-        if not read and image.width != w or image.height != h:
-            if 2*sz not in resized:
-                resized[2*sz] = []
-            resized[2*sz].append(os.path.basename(f))
+        size_round = size_round // 2
+        if not read and ((image.width != w) or (image.height != h)):
+            if 2 * size_round not in resized:
+                resized[2 * size_round] = []
+            resized[2 * size_round].append(os.path.basename(f))
     image = image.resize((w, h), Image.Resampling.LANCZOS)
     return image
 

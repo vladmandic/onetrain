@@ -5,5 +5,4 @@ __pycache__
 venv/
 tmp/
 batch.sh
-/my-*.*
 /*.log

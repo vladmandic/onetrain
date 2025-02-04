@@ -23,6 +23,10 @@ onetrain.train(onetrain.args)
 onetrainer.log(onetrain.info) # info object contains real-time information about training that can be monitored
 ```
 
+## Examples
+
+See `examples/` folder for both **SD-XL** and **FLUX.1-dev** LoRA training scripts and configs  
+
 ## Reference
 
 - <https://github.com/Nerogar/OneTrainer/wiki/LoRA>

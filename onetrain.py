@@ -61,6 +61,7 @@ def main():
     group_params.add_argument('--lr', required=False, type=float, help='learning rate')
     group_params.add_argument('--d', required=False, type=float, help='d coefficient')
     group_params.add_argument('--dropout', required=False, type=float, help='dropout probability')
+    group_params.add_argument('--warmup', required=False, type=int, help='warmup steps')
     group_params.add_argument('--rank', required=False, type=int, help='lora rank')
     group_params.add_argument('--alpha', required=False, type=int, help='lora alpha')
     group_params.add_argument('--batch', required=False, type=int, help='training batch size')
@@ -100,9 +101,9 @@ if __name__ == '__main__':
     if not (os.path.exists(args.onetrainer) and os.path.isdir(args.onetrainer)):
         log.error(f'onetrainer folder not found: {args.input}')
         exit(1)
-    if not (os.path.exists(args.model) and os.path.isfile(args.model)):
-        log.error(f'model not found: {args.model}')
-        exit(1)
+    # if not (os.path.exists(args.model) and os.path.isfile(args.model)):
+    #     log.error(f'model not found: {args.model}')
+    #     exit(1)
     if os.path.exists(os.path.join(args.tmp, args.concept)):
         if args.noclean:
             log.warning(f'concept folder exists: {os.path.join(args.tmp, args.concept)}')

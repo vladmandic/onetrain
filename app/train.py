@@ -18,10 +18,18 @@ def set_config(args: TrainArgs):
     if args.type:
         if args.type == 'sdxl':
             config['model_type'] = "STABLE_DIFFUSION_XL_10_BASE"
+            config['unet']['train'] = True
+            config['prior']['train'] = False
         elif args.type == 'sd':
             config['model_type'] = 'STABLE_DIFFUSION_15'
+            config['unet']['train'] = True
+            config['prior']['train'] = False
         elif args.type == 'flux':
             config['model_type'] = 'FLUX_DEV_1'
+            config['unet']['train'] = False
+            config['prior']['train'] = True
+            config['prior']['weight_dtype'] = "FLOAT_8"
+            config['text_encoder_2']['weight_dtype'] = "FLOAT_8"
         else:
             log.warning(f'Unknown Model type: {args.type}')
     if args.model:
@@ -34,6 +42,8 @@ def set_config(args: TrainArgs):
         config['learning_rate_scheduler'] = args.scheduler
     if args.lr:
         config['learning_rate'] = args.lr
+    if args.warmup:
+        config['learning_rate_warmup_steps'] = args.warmup
     if args.rank:
         config['lora_rank'] = args.rank
     if args.alpha:
@@ -188,7 +198,8 @@ def train(args: TrainArgs):
         log.debug(f'metadata: {json.dumps(trainer.model.model_spec.__dict__, indent=2)}')
         log.info(f'settings: optimizer={config.optimizer.optimizer} scheduler={config.learning_rate_scheduler} rank={config.lora_rank} alpha={config.lora_alpha} batch={config.batch_size} accumulation={config.gradient_accumulation_steps} dropout={config.dropout_probability} lr={config.learning_rate} d={config.optimizer.d_coef} bias={config.optimizer.use_bias_correction}') # noqa: E501
         free()
-        log.info(f'lora: peft={trainer.model.unet_lora.peft_type} class={trainer.model.unet_lora.klass} train={trainer.model.train_dtype}')
+        if hasattr(trainer.model, 'unet_lora'):
+            log.info(f'lora: peft={trainer.model.unet_lora.peft_type} class={trainer.model.unet_lora.klass} train={trainer.model.train_dtype}')
         log.info('train: start')
         with pbar if not args.nopbar else contextlib.nullcontext():
             time.sleep(0.1)

@@ -66,6 +66,7 @@ class TrainArgs():
     accumulation: int
     optimizer: str
     scheduler: str
+    warmup: int
     lr: float
     d: float
     dropoout: float

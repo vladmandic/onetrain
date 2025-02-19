@@ -7,7 +7,7 @@
     "min_height": 500,
     "max_faces": 1,
     "max_blur": 0.05,
-    "min_dynamic_range": 10,
+    "min_dynamic_range": 3,
     "min_face_size": 180,
     "min_face_perc": 0.04,
     "min_face_confidence": 0.6,

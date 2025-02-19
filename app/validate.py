@@ -27,7 +27,7 @@ def check_dynamicrange(image, epsilon=1e-10):
     I_max = torch.clamp(I_max, min=epsilon)
     dynamic_range_db = round(torch.log10(I_max / I_min).item(), 2)
     if dynamic_range_db < config.min_dynamic_range:
-        raise ValueError(f'face-range: {dynamic_range_db}')
+        raise ValueError(f'face-range: min={config.min_dynamic_range} res={dynamic_range_db}')
 
 
 def check_size(image):

@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+import traceback
 import contextlib
 import statistics
 import cv2
@@ -29,10 +30,11 @@ def resize_image(f, image: Image.Image, read = False) -> Image.Image:
     size_round = get_config('validate').get('size_round', 1)
     resize_longest = get_config('validate').get('resize_longest', 1)
     if min(image.width, image.height) > resize_longest:
+        thumb = image.copy()
         if image.width > image.height:
-            image.thumbnail((image.width, resize_longest))
+            thumb.thumbnail((image.width, resize_longest))
         else:
-            image.thumbnail((resize_longest, image.height))
+            thumb.thumbnail((resize_longest, image.height))
     ar0 = round(image.width / image.height, 1)
     ar1 = 0
     while ar0 != ar1:
@@ -43,20 +45,25 @@ def resize_image(f, image: Image.Image, read = False) -> Image.Image:
             if 2 * size_round not in resized:
                 resized[2 * size_round] = []
             resized[2 * size_round].append(os.path.basename(f))
-    image = image.resize((w, h), Image.Resampling.LANCZOS)
-    return image
+    thumb = image.resize((w, h), Image.Resampling.LANCZOS)
+    return thumb
 
 
 def read_image(f: str) -> np.ndarray:
-    image = Image.open(f)
-    image = resize_image(f, image, read=True)
-    if image.mode != 'RGB':
-        converted = { os.path.basename(f): str(image.mode) }
-        log.debug(f'validate convert: {converted}')
-        convert.append(converted)
-        image = image.convert('RGB')
-    image = np.array(image)
-    return image
+    try:
+        image = Image.open(f)
+        if image.mode != 'RGB':
+            converted = { os.path.basename(f): str(image.mode) }
+            log.debug(f'validate convert: {converted}')
+            convert.append(converted)
+            image = image.convert('RGB')
+        resized = resize_image(f, image, read=True)
+        image = np.array(image)
+        resized = np.array(image)
+    except Exception as e:
+        log.debug(f'read image: file="{f}" {e}')
+        return None, None
+    return image, resized
 
 
 def save_image(image: np.ndarray, file, args: TrainArgs, same=False):
@@ -108,7 +115,7 @@ def optimize_buckets(args: TrainArgs, methods=''):
         for bucket in todo:
             for file in bucket:
                 f = os.path.join(folder, pairs[file])
-                image = read_image(f)
+                original, image = read_image(f)
                 h, w, _c = image.shape
                 if method == 'aspect' or method == 'ar': # based on aspect ratio
                     ok.sort(key=lambda x: abs(x[0] - w) + abs(x[1] - h)) # pylint: disable=cell-var-from-loop
@@ -184,16 +191,18 @@ def prepare(args: TrainArgs):
                     log.debug(f'validate failed: {status}')
                 else:
                     try:
-                        image = read_image(f)
+                        original, image = read_image(f)
+                        log.debug(f'validate read: file="{f}" input={list(original.shape)} output={list(image.shape)}')
                     except Exception as e:
                         log.debug(f'images: {f} {e}')
                         status = { file: str(e) }
-                if image is not None and status is None:
-                    face = validate(f, image, args)
+                if original is not None and status is None:
+                    face = validate(f, original, args)
                     if not isinstance(face, np.ndarray):
                         status = face
                     elif cfg.get('gen_portrait', False):
                         if face.shape[1] >= cfg.get('min_width', 1) and face.shape[0] >= cfg.get('min_height', 1):
+                            log.debug(f'validate extract: face={list(face.shape)}')
                             fn = save_image(face, file, args)
                             generate[file] = fn
                 if status is not None:
@@ -212,6 +221,7 @@ def prepare(args: TrainArgs):
                     pbar.update(task, completed=i+1, text=f'{i+1}/{len(files)} images')
     except Exception as e:
         log.error(f'images: {e}')
+        # traceback.print_exc()
     if not args.nopbar:
         pbar.remove_task(task)
 

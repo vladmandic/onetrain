@@ -17,6 +17,7 @@ from .app.caption import caption
 from .app.train import train
 from .app.util import TrainArgs, free
 
+
 args = TrainArgs()
 
 

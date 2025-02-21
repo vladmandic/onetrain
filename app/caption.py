@@ -94,11 +94,11 @@ def caption_wdtagger(args: TrainArgs):
             results = { model.config.id2label[i]: logit.float() for i, logit in enumerate(logits) }
             results = { k: v.item() for k, v in sorted(results.items(), key=lambda item: item[1], reverse=True) if v > threshold }
             words = list(results)
-            log.debug(f'caption: "{f}"={words}')
             tag = os.path.splitext(file)[0] + '.txt'
             with open(tag, 'a', encoding='utf8') as f:
                 txt = ', '.join(words).replace('rating:', '')
                 f.write(f'{txt}, ')
+                log.debug(f'caption: "{tag}"="{txt}"')
             if not args.nopbar:
                 pbar.update(task, completed=i+1, text=f'{i+1}/{len(files)} images')
     if not args.nopbar:
@@ -146,9 +146,9 @@ def caption_florence(args, repo, task_prompt: str = "<MORE_DETAILED_CAPTION>"):
             p = parsed.get(task_prompt, '')
             p = p.split('\n')[0].replace('\\(', '').replace('\\)', '').replace(' a ', ' ').replace('A ', '').replace('The ', '').replace('  ', ' ').strip()
             tag = os.path.splitext(file)[0] + '.txt'
-            log.debug(f'caption: "{f}"="{p}"')
             with open(tag, 'a', encoding='utf8') as f:
                 f.write(p + '  ')
+                log.debug(f'caption: "{tag}"="{p}"')
             if not args.nopbar:
                 pbar.update(task, completed=i+1, text=f'{i+1}/{len(files)} images')
     if not args.nopbar:
@@ -170,7 +170,7 @@ def caption(args: TrainArgs):
 
     t0 = time.time()
     for captioner in captioners:
-        log.info(f'caption: run={captioner} folder="{folder}"')
+        # log.info(f'caption: run={captioner} folder="{folder}"')
         if captioner == 'clear':
             for f in os.listdir(folder):
                 if f.endswith('.txt'):

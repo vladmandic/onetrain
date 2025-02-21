@@ -183,6 +183,7 @@ def prepare(args: TrainArgs):
                 status = None
                 f = os.path.join(args.input, file)
                 ext = os.path.splitext(f)[1].lower()
+                original = None
                 image = None
                 if ext == '.txt':
                     status = None if not args.caption else { file: 'skip caption' }

@@ -39,7 +39,7 @@
         "width": 1024,
         "seed": -1,
         "random_seed": false,
-        "diffusion_steps": 15,
+        "diffusion_steps": 20,
         "cfg_scale": 6.0,
         "noise_scheduler": "UNIPC"
     }
@@ -118,7 +118,7 @@
     "clear_cache_before_training": true,
     "learning_rate_scheduler": "COSINE",
     "learning_rate": 1.0,
-    "learning_rate_warmup_steps": 20,
+    "learning_rate_warmup_steps": 100,
     "learning_rate_cycles": 1,
     "epochs": 100,
     "batch_size": 1,
@@ -181,7 +181,7 @@
     "text_encoder": {
         "__version": 0,
         "model_name": "",
-        "train": false,
+        "train": true,
         "stop_training_after": 0,
         "stop_training_after_unit": "EPOCH",
         "learning_rate": null,

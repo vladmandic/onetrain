@@ -5,6 +5,7 @@ import contextlib
 import datetime
 import random
 import torch
+import huggingface_hub as hf
 from .logger import log, console
 from .util import TrainArgs, set_path, clean_dict, info, free
 from .config import get_config
@@ -112,6 +113,10 @@ def set_config(args: TrainArgs):
                 log.info(f'samples prompt: "{prompt()}"')
         log.info(f'write samples: file="{train_config.sample_definition_file_name}"')
         json.dump(samples, f, indent=2)
+
+    token = os.environ.get('HF_TOKEN', None)
+    if token is not None:
+        hf.login(token=token, add_to_git_credential=False, write_permission=False)
 
     return train_config, config
 

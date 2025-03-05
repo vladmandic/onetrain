@@ -1,0 +1,46 @@
+{
+  "caption": [
+    "clear",
+    "concept",
+    "wdtagger",
+    "cog"
+  ],
+  "validate": {
+    "min_size": 500000,
+    "max_size": 2000000,
+    "min_width": 500,
+    "min_height": 500,
+    "max_faces": 1,
+    "max_blur": 0.05,
+    "min_dynamic_range": 5,
+    "min_face_size": 180,
+    "min_face_perc": 0.025,
+    "min_face_confidence": 0.6,
+    "max_face_overlap": 0.25,
+    "max_face_size": 0.33,
+    "max_distance": 0.70,
+    "min_bucket": 1,
+    "min_portraits": 0.5,
+    "gen_portrait": true,
+    "resize_threshold": 0.30,
+    "resize_longest": 1024,
+    "size_round": 64,
+    "bucketize": "ar,w,h"
+  },
+  "train": {
+    "log": "/home/vlado/dev/onetrain/tmp/my.log",
+    "author": "cassie",
+    "batch": 1,
+    "epochs": 70,
+    "rank": 16,
+    "alpha": 16,
+    "lr": 1.0,
+    "d": 0.8,
+    "warmup": 50,
+    "validate": true,
+    "caption": true,
+    "tag": true,
+    "train": true,
+    "debug": true
+  }
+}

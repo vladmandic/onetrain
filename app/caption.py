@@ -77,7 +77,7 @@ def caption_wdtagger(args: TrainArgs):
     log.info(f'caption: model="{repo}" path="{folder}" threshold={threshold}')
     model = transformers.AutoModelForImageClassification.from_pretrained(repo, trust_remote_code=True)
     processor = transformers.AutoImageProcessor.from_pretrained(repo, trust_remote_code=True, use_fast=False)
-    # model = model.to(device=accelerator.device, dtype=dtype) # wdtagger somehow runs faster on cpu
+    model = model.to(device=accelerator.device, dtype=dtype) # wdtagger somehow runs faster on cpu
     files = os.listdir(folder)
     files = [f for f in files if os.path.splitext(f)[1].lower() in ['.jpg', '.jpeg', '.png', '.webp']]
     if not args.nopbar:

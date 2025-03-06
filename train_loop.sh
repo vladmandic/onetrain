@@ -49,11 +49,11 @@ for config in "${configs[@]}"; do
           --sample \
           --debug \
           --caption \
-          > "/mnt/sdnext-shared/train-dir/nohup_${dataset_basename}_${config_basename}.out" 2>&1 &
+          > "/mnt/sdnext-shared/train-dir/nohup_${dataset_basename}_${config_basename}.out" 2>&1
         
         # Optional: If you want to run each training job sequentially (one after another),
         # remove the "&" above and uncomment "wait" below.
         #
-        # wait
+        wait
     done
 done

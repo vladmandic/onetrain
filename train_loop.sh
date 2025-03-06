@@ -22,6 +22,16 @@ onetrainer_path="/home/hello@moodmagic.ai/onetrainer"
 # Base model
 model_name="black-forest-labs/FLUX.1-dev"
 
+generate_random_concept() {
+  # Random length between 3 and 6
+  local length=$(( (RANDOM % 4) + 3 ))
+  # Excluding vowels from the character set:
+  local chars='B-DF-HJ-NP-TV-Zb-df-hj-np-tv-z0-9'
+  
+  # Pull from /dev/urandom, filter to our chars, take 'length' chars
+  tr -dc "$chars" < /dev/urandom | head -c "$length"
+}
+
 # Loop over each config/dataset pair
 for config in "${configs[@]}"; do
     config_basename="$(basename "$config" .json)"  # e.g. "vlad-lora" from "vlad-lora.json"
@@ -33,7 +43,11 @@ for config in "${configs[@]}"; do
         log_file="/mnt/sdnext-shared/train-dir/${dataset_basename}_${config_basename}.log"
         output_file="/mnt/sdnext-shared/data-dir/models/Lora/${dataset_basename}_${config_basename}.safetensors"
         tmp_dir="/mnt/sdnext-shared/train-dir/tmp_${dataset_basename}_${config_basename}"
-        concept="${dataset_basename}_${config_basename}--train"
+        # Generate a random concept (3–6 chars, no vowels)
+        concept="$(generate_random_concept)"
+
+        echo "Now training on config: $config, dataset: $dataset"
+        echo "Random concept is: $concept"
 
         # Run training under nohup so it keeps going if you disconnect
         nohup python onetrain.py \

@@ -1,5 +1,9 @@
 {
-  "train": {},
+  "train": {
+    "train": true,
+    "debug": true,
+    "caption": true
+  },
   "validate": {
     "min_size": 500000,
     "max_size": 2000000,
@@ -24,7 +28,8 @@
   },
   "caption": [
     "clear",
-    "concept"
+    "concept",
+    "cog"
   ],
   "tag": 0.4,
   "samples": [
@@ -108,7 +113,7 @@
     "output_dtype": "FLOAT_32",
     "output_model_format": "SAFETENSORS",
     "output_model_destination": "models/lora.safetensors",
-    "gradient_checkpointing": true,
+    "gradient_checkpointing": "ON",
     "force_circular_padding": false,
     "concept_file_name": "training_concepts/concepts.json",
     "concepts": null,
@@ -123,7 +128,7 @@
     "learning_rate": 1.0,
     "learning_rate_warmup_steps": 200,
     "learning_rate_cycles": 3,
-    "epochs": 140,
+    "epochs": 200,
     "batch_size": 1,
     "gradient_accumulation_steps": 1,
     "ema": "OFF",
@@ -392,10 +397,10 @@
     "sample_image_format": "JPG",
     "samples_to_tensorboard": true,
     "non_ema_sampling": false,
-    "backup_after": 1000,
+    "backup_after": 200,
     "backup_after_unit": "STEP",
     "rolling_backup": false,
-    "rolling_backup_count": 3,
+    "rolling_backup_count": 15,
     "backup_before_save": true,
     "save_after": 0,
     "save_after_unit": "NEVER",

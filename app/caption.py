@@ -226,8 +226,9 @@ def tags(args: TrainArgs):
     info.status = 'tag'
     _triggers = {}
     _tags = {}
+    _concept = { args.concept: -1 }
     if args.trigger and isinstance(args.trigger, str):
-        _triggers = {t.strip(): 1 for t in args.trigger.split(',')}
+        _triggers = {t.strip(): -1 for t in args.trigger.split(',')}
         log.info(f'caption: triggers={_triggers}')
     if args.tag and isinstance(args.tag, float):
         t0 = time.time()
@@ -240,12 +241,12 @@ def tags(args: TrainArgs):
         _tags = {item: all_tags.count(item) for item in set(all_tags)}
         _tags = {k: v for k, v in sorted(_tags.items(), key=lambda item: item[1], reverse=True) if v >= threshold }
         _tags.pop(args.concept, None)
-        _tags = { **_triggers, args.concept: count, **_tags }
         t1 = time.time()
         log.info(f'caption: theshold={threshold:.2f} text={len(all_text)} words={len(all_words)} tags={len(all_tags)} time={t1-t0:.2f}')
         log.info(f'caption: tags={_tags}')
         return _tags
-    return _tags
+    res = { **_triggers, **_concept, **_tags }
+    return res
 
 
 def prompt():

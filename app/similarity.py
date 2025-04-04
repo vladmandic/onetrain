@@ -57,7 +57,7 @@ def distance(source, target):
         reference_file = source
         reference_image = cv2.imread(source) if isinstance(source, str) else source
         if reference_image is None:
-            log.warning('face-reference: none')
+            log.debug('face-reference: none')
             return -1
         reference = face(reference_image, detector=_detector, model=_model, normalize=_normalize, actions=_actions)
         log.info(f'validate similarity: model="{_model}" detector="{_detector}" normalization="{_normalize}" actions={_actions} metric="{_metric}"')

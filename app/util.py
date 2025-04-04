@@ -38,6 +38,7 @@ class TrainArgs():
     concept: str
     type: str
     author: str
+    trigger: str
 
     model: str
     input: str
@@ -49,15 +50,16 @@ class TrainArgs():
     config: str
     reference: str
 
-    validate: bool
-    caption: bool
-    tag: bool
-    train: bool
-    sample: bool
-    rembg: bool
-    save: int
-    backup: int
-    resume: bool
+    validate: bool = False
+    caption: bool = False
+    tag: bool = False
+    train: bool = False
+    sample: bool = False
+    rembg: bool = False
+    save: bool = False
+    backup: bool = False
+    resume: bool = False
+    interval: int = 0
 
     te: bool
     nobias: bool

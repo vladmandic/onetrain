@@ -12,6 +12,7 @@ INPUT_BASE_PATH=~/generative/Input
 OUTPUT_PATH=/mnt/models/Lora
 HF_HUB_CACHE=/mnt/models/Diffusers
 
+TRIGGER="woman"
 ACTOR="$1"
 REFERENCE_IMAGE="$2"
 
@@ -33,6 +34,7 @@ cd "${ONETRAINER_PATH}"
   --model "${MODEL_FILE}" \
   --config "${TRAIN_CONFIG}" \
   --concept "${ACTOR}" \
+  --trigger "${TRIGGER}" \
   --reference "${INPUT_BASE_PATH}/${ACTOR/$REFERENCE_IMAGE}" \
   --input "${INPUT_BASE_PATH}/${ACTOR}/" \
   --output "${OUTPUT_PATH}/${ACTOR}.safetensors" \
@@ -40,4 +42,6 @@ cd "${ONETRAINER_PATH}"
   --log "${TMP_PATH}/onetrain.log" \
   --type flux \
   --sample \
+  --save \
+  --interval 10 \
   --debug \

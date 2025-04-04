@@ -8,7 +8,7 @@
     "max_faces": 1,
     "max_blur": 0.05,
     "min_dynamic_range": 3,
-    "min_face_size": 180,
+    "min_face_size": 150,
     "min_face_perc": 0.04,
     "min_face_confidence": 0.6,
     "min_bucket": 1,
@@ -24,7 +24,7 @@
   },
   "caption": [
     "clear",
-    "concept",
+    "trigger",
     "wdtagger",
     "cog"
   ],
@@ -182,8 +182,8 @@
         "__version": 0,
         "model_name": "",
         "train": false,
-        "stop_training_after": 0,
-        "stop_training_after_unit": "EPOCH",
+        "stop_training_after": null,
+        "stop_training_after_unit": "NEVER",
         "learning_rate": null,
         "weight_dtype": "NONE"
     },
@@ -192,8 +192,8 @@
         "__version": 0,
         "model_name": "",
         "train": false,
-        "stop_training_after": 0,
-        "stop_training_after_unit": "EPOCH",
+        "stop_training_after": null,
+        "stop_training_after_unit": "NEVER",
         "learning_rate": null,
         "weight_dtype": "NONE"
     },
@@ -263,10 +263,10 @@
     "additional_embeddings": [],
     "embedding_weight_dtype": "FLOAT_16",
     "lora_model_name": "",
-    "lora_rank": 16,
-    "lora_alpha": 16,
+    "lora_rank": 12,
+    "lora_alpha": 12,
     "lora_decompose": false,
-    "lora_weight_dtype": "FLOAT_32", 
+    "lora_weight_dtype": "FLOAT_32",
     "optimizer": {
         "__version": 0,
         "optimizer": "PRODIGY",

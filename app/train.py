@@ -5,10 +5,16 @@ import contextlib
 import datetime
 import random
 import torch
+import huggingface_hub as hf
 from .logger import log, console
 from .util import TrainArgs, set_path, clean_dict, info, free
 from .config import get_config
 from .caption import tags, prompt
+
+
+token = os.environ.get('HF_TOKEN', None)
+if token is not None:
+    hf.login(token=token, add_to_git_credential=False, write_permission=False)
 
 
 def set_config(args: TrainArgs):
@@ -66,14 +72,15 @@ def set_config(args: TrainArgs):
         config['optimizer']['use_bias_correction'] = False
     if args.nogradient:
         config['gradient_checkpointing'] = False
-    if args.backup:
-        config['backup_after'] = int(config['epochs'] / args.backup)
+    if args.backup and args.interval > 0:
+        config['backup_after'] = args.interval
         config['backup_after_unit'] = 'EPOCH'
-    if args.save:
-        config['save_after'] = int(config['epochs'] / args.save)
+    if args.save and args.interval > 0:
+        config['save_after'] = args.interval
         config['save_after_unit'] = 'EPOCH'
-    if args.sample:
-        config['sample_after'] = 10
+        config['save_filename_prefix'] = args.concept
+    if args.sample and args.interval > 0:
+        config['sample_after'] = args.interval
         config['sample_after_unit'] = 'EPOCH'
     os.makedirs(args.tmp, exist_ok=True)
     config['debug_dir'] = os.path.join(args.tmp, 'debug')
@@ -87,7 +94,7 @@ def set_config(args: TrainArgs):
     train_config.from_dict(config)
 
     with open(os.path.join(args.tmp, 'config.json'), "w", encoding='utf-8') as f:
-        log.info(f'write config: file="{os.path.join(args.tmp, "config.json")}"')
+        log.info(f'write train config: file="{os.path.join(args.tmp, "config.json")}"')
         json.dump(config, f, indent=2)
 
     with open(train_config.concept_file_name, "w", encoding='utf-8') as f:
@@ -98,19 +105,30 @@ def set_config(args: TrainArgs):
         if args.resolution:
             concepts[0]["image"]["enable_resolution_override"] = True
             concepts[0]["image"]["resolution_override"] = str(train_config.resolution)
-        log.info(f'write concepts: file="{train_config.concept_file_name}" name="{args.concept}"')
+        log.info(f'write concepts config: file="{train_config.concept_file_name}" name="{args.concept}"')
         json.dump(concepts, f, indent=2)
 
     with open(train_config.sample_definition_file_name, "w", encoding='utf-8') as f:
+        sample = get_config('sample')
+        seed = sample.get('seed', int(random.randrange(4294967294)))
+        width = sample.get('width', 1024)
+        height = sample.get('height', 1024)
+        steps = sample.get('steps', 20)
+        cfg = sample.get('cfg', 7.0)
+        scheduler = sample.get('scheduler', 'UNIPC')
         samples = get_config('samples')
-        seed = int(random.randrange(4294967294))
+        log.info(f'samples: enabled={args.sample} seed={seed} width={width} height={height} steps={steps} cfg={cfg} scheduler={scheduler}')
+        log.info(f'samples prompt: "{prompt()}"')
         for i, _s in enumerate(samples):
-            if args.sample:
-                samples[i]["enabled"] = True
-                samples[i]["prompt"] = prompt()
-                samples[i]["seed"] = seed
-                log.info(f'samples prompt: "{prompt()}"')
-        log.info(f'write samples: file="{train_config.sample_definition_file_name}"')
+            samples[i]["enabled"] = args.sample
+            samples[i]["prompt"] = prompt()
+            samples[i]["seed"] = seed
+            samples[i]["width"] = width
+            samples[i]["height"] = height
+            samples[i]["diffusion_steps"] = steps
+            samples[i]["cfg_scale"] = cfg
+            samples[i]["noise_scheduler"] = scheduler
+        log.info(f'write samples config: file="{train_config.sample_definition_file_name}"')
         json.dump(samples, f, indent=2)
 
     return train_config, config
@@ -145,7 +163,7 @@ def train(args: TrainArgs):
         if p.global_step == 1:
             log.info(f'settings: steps={info.total} epochs={max_epoch} images={len(info.samples)} samples={max_sample}')
         if not args.nopbar:
-            pbar.update(task, completed=info.step, total=info.total, description="train", text=f'step: {info.step}/{info.total} epoch: {info.epoch+1}/{max_epoch} batch: {p.epoch_step} samples: {max_sample} its: {info.its:.2f} memory: {info.mem}')
+            pbar.update(task, completed=info.step, total=info.total, description="train", text=f'step:{info.step}/{info.total} batch:{p.epoch_step} epoch:{info.epoch+1}/{max_epoch} samples:{max_sample} its:{info.its:.2f} memory:{info.mem}')
 
     def log_update(s: str):
         if 'loading' in s:
@@ -168,6 +186,7 @@ def train(args: TrainArgs):
     config, config_json = set_config(args)
     log.info(f'method={config.training_method} type={config.model_type}')
     log.info(f'model="{config.base_model_name}"')
+    log.info(f'concept="{args.concept}" sample={args.sample} backup={args.backup} save={args.save} interval={args.interval} resume={args.resume}')
 
     trainer = GenericTrainer(config, callbacks, commands)
     if not args.nopbar:

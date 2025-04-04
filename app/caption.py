@@ -77,7 +77,7 @@ def caption_wdtagger(args: TrainArgs):
     log.info(f'caption: model="{repo}" path="{folder}" threshold={threshold}')
     model = transformers.AutoModelForImageClassification.from_pretrained(repo, trust_remote_code=True)
     processor = transformers.AutoImageProcessor.from_pretrained(repo, trust_remote_code=True, use_fast=False)
-    # model = model.to(device=accelerator.device, dtype=dtype) # wdtagger somehow runs faster on cpu
+    model = model.to(device=accelerator.device, dtype=dtype) # wdtagger somehow runs faster on cpu
     files = os.listdir(folder)
     files = [f for f in files if os.path.splitext(f)[1].lower() in ['.jpg', '.jpeg', '.png', '.webp']]
     if not args.nopbar:
@@ -148,7 +148,7 @@ def caption_florence(args, repo, task_prompt: str = "<MORE_DETAILED_CAPTION>"):
             tag = os.path.splitext(file)[0] + '.txt'
             with open(tag, 'a', encoding='utf8') as f:
                 f.write(p + '  ')
-                log.debug(f'caption: "{tag}"="{p}"')
+                log.debug(f'caption: type="cog" "{tag}"="{p}"')
             if not args.nopbar:
                 pbar.update(task, completed=i+1, text=f'{i+1}/{len(files)} images')
     if not args.nopbar:
@@ -175,6 +175,13 @@ def caption(args: TrainArgs):
             for f in os.listdir(folder):
                 if f.endswith('.txt'):
                     os.remove(os.path.join(folder, f))
+        if captioner == 'trigger':
+            for f in os.listdir(folder):
+                ext = os.path.splitext(f)[1].lower()
+                if ext in [args.format]:
+                    fn = os.path.splitext(f)[0] + '.txt'
+                    with open(os.path.join(folder, fn), 'a', encoding='utf8') as file:
+                        file.write(f'{args.trigger}, ')
         if captioner == 'concept':
             for f in os.listdir(folder):
                 ext = os.path.splitext(f)[1].lower()
@@ -217,7 +224,12 @@ def caption(args: TrainArgs):
 
 def tags(args: TrainArgs):
     info.status = 'tag'
-    if args.tag:
+    _triggers = {}
+    _tags = {}
+    if args.trigger and isinstance(args.trigger, str):
+        _triggers = {t.strip(): 1 for t in args.trigger.split(',')}
+        log.info(f'caption: triggers={_triggers}')
+    if args.tag and isinstance(args.tag, float):
         t0 = time.time()
         count = len(all_tags)
         threshold = get_config('tag') * count
@@ -228,12 +240,12 @@ def tags(args: TrainArgs):
         _tags = {item: all_tags.count(item) for item in set(all_tags)}
         _tags = {k: v for k, v in sorted(_tags.items(), key=lambda item: item[1], reverse=True) if v >= threshold }
         _tags.pop(args.concept, None)
-        _tags = { args.concept: count, **_tags }
+        _tags = { **_triggers, args.concept: count, **_tags }
         t1 = time.time()
         log.info(f'caption: theshold={threshold:.2f} text={len(all_text)} words={len(all_words)} tags={len(all_tags)} time={t1-t0:.2f}')
         log.info(f'caption: tags={_tags}')
         return _tags
-    return {}
+    return _tags
 
 
 def prompt():

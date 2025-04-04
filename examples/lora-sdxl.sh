@@ -38,4 +38,5 @@ cd "${ONETRAINER_PATH}"
   --log "${TMP_PATH}/onetrain.log" \
   --type sdxl \
   --sample \
+  --interval 10 \
   --debug \

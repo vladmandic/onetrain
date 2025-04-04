@@ -59,7 +59,7 @@ def detect_face(image):
     sizes = [face.shape[0] * face.shape[1] for face in all_faces]
     relative = [round((face.shape[0] * face.shape[1]) / (all_faces[0].shape[0] * all_faces[0].shape[1]), 2) for face in all_faces]
     for i in range(len(all_faces)):
-        debug_log(f'validate face-detected: n={i+1}/{len(all_faces)} width={shapes[i][1]} height={shapes[i][0]} score={scores[i]:.2f} box={boxes[i]} siz={sizes[i]} relative={relative[i]} image={image.shape}')
+        debug_log(f'validate face-detected: n={i+1}/{len(all_faces)} width={shapes[i][1]} height={shapes[i][0]} score={scores[i]:.2f} box={boxes[i]} size={sizes[i]} relative={relative[i]} image={image.shape}')
     if len(all_faces) == 0:
         debug_log(f'validate face-detected: min-confidence={config.min_face_confidence}')
         all_faces, scores, boxes = detect(image, min_confidence=0, max_detected=3, iou=config.max_face_overlap)

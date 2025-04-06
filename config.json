@@ -6,7 +6,7 @@
     "min_width": 500,
     "min_height": 500,
     "max_faces": 1,
-    "max_blur": 0.05,
+    "max_blur": 0.1,
     "min_dynamic_range": 3,
     "min_face_size": 150,
     "min_face_perc": 0.04,

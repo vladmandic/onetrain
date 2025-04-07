@@ -72,6 +72,8 @@ def set_config(args: TrainArgs):
         config['optimizer']['use_bias_correction'] = False
     if args.nogradient:
         config['gradient_checkpointing'] = False
+    if args.interval is None:
+        args.interval = 0
     if args.backup and args.interval > 0:
         config['backup_after'] = args.interval
         config['backup_after_unit'] = 'EPOCH'

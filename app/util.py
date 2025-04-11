@@ -1,7 +1,10 @@
+import io
 import os
 import sys
+import base64
 import types
 import accelerate
+import huggingface_hub as hf
 
 
 class Obj:
@@ -128,3 +131,22 @@ def free():
         log.debug(f'cuda memory: avail={avail / 1024 / 1024 / 1024:.3f} total={total / 1024 / 1024 / 1024:.3f}')
     else:
         log.debug('CUDA not available or device is CPU. Skipping CUDA memory cleanup.')
+
+
+def login():
+    token = os.environ.get('HF_TOKEN', None)
+    if token is not None:
+        hf.login(token=token, add_to_git_credential=False, write_permission=False)
+
+
+def b64(image):
+    with io.BytesIO() as stream:
+        image = image.convert('RGB')
+        image.save(stream, 'JPEG')
+        values = stream.getvalue()
+        encoded = base64.b64encode(values).decode()
+        return encoded
+
+
+def cache_dir():
+    return os.environ.get('HF_HUB_CACHE', None)

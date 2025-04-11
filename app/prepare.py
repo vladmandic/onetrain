@@ -1,7 +1,6 @@
 import os
 import time
 import uuid
-import traceback
 import contextlib
 import statistics
 import cv2
@@ -57,13 +56,13 @@ def read_image(f: str) -> np.ndarray:
             log.debug(f'validate convert: {converted}')
             convert.append(converted)
             image = image.convert('RGB')
-        resized = resize_image(f, image, read=True)
+        resized_image = resize_image(f, image, read=True)
         image = np.array(image)
-        resized = np.array(image)
+        resized_image = np.array(image)
     except Exception as e:
         log.debug(f'read image: file="{f}" {e}')
         return None, None
-    return image, resized
+    return image, resized_image
 
 
 def save_image(image: np.ndarray, file, args: TrainArgs, same=False):
@@ -115,7 +114,7 @@ def optimize_buckets(args: TrainArgs, methods=''):
         for bucket in todo:
             for file in bucket:
                 f = os.path.join(folder, pairs[file])
-                original, image = read_image(f)
+                _original, image = read_image(f)
                 h, w, _c = image.shape
                 if method == 'aspect' or method == 'ar': # based on aspect ratio
                     ok.sort(key=lambda x: abs(x[0] - w) + abs(x[1] - h)) # pylint: disable=cell-var-from-loop

@@ -5,18 +5,13 @@ import contextlib
 import datetime
 import random
 import torch
-import huggingface_hub as hf
 from .logger import log, console
-from .util import TrainArgs, set_path, clean_dict, info, free
+from .util import TrainArgs, set_path, clean_dict, free, login, info
 from .config import get_config
 from .caption import tags, prompt
 
 
-token = os.environ.get('HF_TOKEN', None)
-if token is not None:
-    hf.login(token=token, add_to_git_credential=False, write_permission=False)
-
-
+login()
 def set_config(args: TrainArgs):
     from modules.util.config.TrainConfig import TrainConfig # pylint: disable=import-error
     config = get_config('onetrainer')

@@ -10,7 +10,7 @@ TMP_PATH=/home/vlado/dev/onetrain/tmp
 MODEL_FILE=black-forest-labs/FLUX.1-dev
 INPUT_BASE_PATH=~/generative/Input
 OUTPUT_PATH=/mnt/models/Lora
-HF_HUB_CACHE=/mnt/models/Diffusers
+HF_HUB_CACHE=/mnt/models/huggingface
 
 TRIGGER="woman"
 ACTOR="$1"

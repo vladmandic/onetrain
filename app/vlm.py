@@ -8,7 +8,7 @@ import accelerate
 import transformers
 from PIL import Image
 from .logger import log
-from .util import login, b64, cache_dir
+from .util import login, b64, cache_dir, decode
 
 
 dtype = torch.bfloat16
@@ -71,6 +71,10 @@ def set_options(**kwargs):
     return default_options
 
 
+def get_options():
+    return default_options
+
+
 def analyze(image: Union[str, Image.Image],
             prompt: str = None,
             variant: str = '4b',
@@ -116,8 +120,11 @@ def analyze(image: Union[str, Image.Image],
                 log.error(f'vlm input: image="{image}" {e}')
                 return {}
         else:
-            log.error(f'vlm input: image="{image}" not a file')
-            return {}
+            try:
+                image = decode(image)
+            except Exception as e:
+                log.error(f'vlm input: image="{image}" {e}')
+                return {}
 
     if prompt and os.path.exists(prompt):
         with open(prompt, 'r', encoding='utf8') as f:

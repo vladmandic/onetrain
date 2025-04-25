@@ -98,6 +98,9 @@ main()
 
 
 if __name__ == '__main__':
+    if args.input is None:
+        log.error('input not provided')
+        exit(1)
     if not (os.path.exists(args.input) and os.path.isdir(args.input)):
         log.error(f'input folder not found: {args.input}')
         exit(1)

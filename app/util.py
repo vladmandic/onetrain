@@ -148,5 +148,12 @@ def b64(image):
         return encoded
 
 
+def decode(encoding):
+    from PIL import Image
+    if encoding.startswith("data:image/"):
+        encoding = encoding.split(";")[1].split(",")[1]
+    return Image.open(io.BytesIO(base64.b64decode(encoding)))
+
+
 def cache_dir():
     return os.environ.get('HF_HUB_CACHE', None)
